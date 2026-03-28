@@ -37,7 +37,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "static",
+      "name": "HomeBase - Family Household Manager",
+      "shortName": "HomeBase",
+      "description": "AI-powered family household management by Ease AI",
+      "themeColor": "#22C55E",
+      "backgroundColor": "#ffffff"
     },
     "plugins": [
       "expo-router",
