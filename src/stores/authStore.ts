@@ -10,6 +10,12 @@ interface HouseholdMember {
   display_name: string;
   avatar_url: string | null;
   permissions: Record<string, boolean>;
+  // Admin fields
+  approval_status: 'pending' | 'approved' | 'revoked' | 'suspended';
+  is_super_admin: boolean;
+  is_master_account: boolean;
+  require_password_change: boolean;
+  two_factor_enabled: boolean;
 }
 
 interface Household {
@@ -25,6 +31,9 @@ interface AuthState {
   household: Household | null;
   isLoading: boolean;
   isOnboarded: boolean;
+  isApproved: boolean;
+  isPendingApproval: boolean;
+  isSuperAdmin: boolean;
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -43,13 +52,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   household: null,
   isLoading: true,
   isOnboarded: false,
+  isApproved: false,
+  isPendingApproval: false,
+  isSuperAdmin: false,
 
   setSession: (session) => {
     set({ session, user: session?.user ?? null });
     if (session?.user) {
       get().loadMemberAndHousehold();
     } else {
-      set({ member: null, household: null, isOnboarded: false, isLoading: false });
+      set({
+        member: null, household: null, isOnboarded: false, isLoading: false,
+        isApproved: false, isPendingApproval: false, isSuperAdmin: false,
+      });
     }
   },
 
@@ -66,6 +81,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (memberData) {
         const household = memberData.households;
+        const approvalStatus = memberData.approval_status || 'approved';
+
         set({
           member: {
             id: memberData.id,
@@ -75,15 +92,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             display_name: memberData.display_name,
             avatar_url: memberData.avatar_url,
             permissions: (memberData.permissions as Record<string, boolean>) || {},
+            approval_status: approvalStatus,
+            is_super_admin: memberData.is_super_admin || false,
+            is_master_account: memberData.is_master_account || false,
+            require_password_change: memberData.require_password_change || false,
+            two_factor_enabled: memberData.two_factor_enabled || false,
           },
           household: household
             ? { id: household.id, name: household.name, invite_code: household.invite_code }
             : null,
           isOnboarded: true,
+          isApproved: approvalStatus === 'approved',
+          isPendingApproval: approvalStatus === 'pending',
+          isSuperAdmin: memberData.is_super_admin || false,
           isLoading: false,
         });
       } else {
-        set({ member: null, household: null, isOnboarded: false, isLoading: false });
+        set({
+          member: null, household: null, isOnboarded: false, isLoading: false,
+          isApproved: false, isPendingApproval: false, isSuperAdmin: false,
+        });
       }
     } catch {
       set({ isLoading: false });
@@ -106,7 +134,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ session: null, user: null, member: null, household: null, isOnboarded: false });
+    set({
+      session: null, user: null, member: null, household: null,
+      isOnboarded: false, isApproved: false, isPendingApproval: false, isSuperAdmin: false,
+    });
   },
 
   createHousehold: async (name) => {
@@ -131,7 +162,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const user = get().user;
     if (!user) return { error: new Error('Not authenticated') };
 
-    // Look up household by invite code
     const { data: household, error: lookupError } = await supabase
       .from('households')
       .select('id')

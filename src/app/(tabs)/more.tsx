@@ -27,7 +27,8 @@ function MenuItem({ emoji, title, subtitle, onPress }: {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { household, member, signOut } = useAuthStore();
+  const { household, member, isSuperAdmin, signOut } = useAuthStore();
+  const isParent = member?.role === 'parent';
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -80,6 +81,21 @@ export default function MoreScreen() {
           <MenuItem emoji="📤" title="Export Data" subtitle="PDF or CSV expense reports" onPress={() => router.push('/financial-reports')} />
           <MenuItem emoji="📋" title="Bank Statement" subtitle="Upload CSV to import expenses" onPress={() => router.push('/bank-statement')} />
         </Card>
+
+        {/* Admin section — visible to super admins and parents */}
+        {(isSuperAdmin || isParent) && (
+          <>
+            <Text style={styles.sectionTitle}>Administration</Text>
+            <Card variant="outlined" style={styles.menuCard}>
+              {isSuperAdmin && (
+                <MenuItem emoji="🛡️" title="Admin Panel" subtitle="Manage all users and households" onPress={() => router.push('/admin')} />
+              )}
+              {isParent && (
+                <MenuItem emoji="👥" title="Manage Members" subtitle="Approve and manage family members" onPress={() => router.push('/parent-admin')} />
+              )}
+            </Card>
+          </>
+        )}
 
         <Text style={styles.sectionTitle}>Settings</Text>
         <Card variant="outlined" style={styles.menuCard}>
