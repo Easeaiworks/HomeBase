@@ -76,12 +76,12 @@ export default function HomeScreen() {
         {/* Quick Actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickActions}>
-          <QuickAction emoji="🗣️" label="Voice" onPress={() => {}} />
+          <QuickAction emoji="🗣️" label="Voice" onPress={() => router.push('/voice-assistant')} />
           <QuickAction emoji="➕" label="Event" onPress={() => router.push('/(tabs)/calendar')} />
-          <QuickAction emoji="📸" label="Receipt" onPress={() => router.push('/(tabs)/expenses')} />
+          <QuickAction emoji="📸" label="Receipt" onPress={() => router.push('/receipt-scanner')} />
           <QuickAction emoji="🛒" label="Grocery" onPress={() => router.push('/(tabs)/lists')} />
-          <QuickAction emoji="🍳" label="Recipes" onPress={() => {}} />
-          <QuickAction emoji="🔧" label="Repairs" onPress={() => {}} />
+          <QuickAction emoji="🍳" label="Recipes" onPress={() => router.push('/voice-assistant')} />
+          <QuickAction emoji="🔧" label="Repairs" onPress={() => router.push('/voice-assistant')} />
         </ScrollView>
 
         {/* Today's Schedule */}

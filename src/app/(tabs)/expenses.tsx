@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { colors, typography, spacing, shadows } from '../../constants/theme';
@@ -17,6 +18,7 @@ const CATEGORIES = [
 ];
 
 export default function ExpensesScreen() {
+  const router = useRouter();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   return (
@@ -66,7 +68,7 @@ export default function ExpensesScreen() {
         {/* Quick add buttons */}
         <Text style={styles.sectionTitle}>Add Expense</Text>
         <View style={styles.addRow}>
-          <Button title="📸 Scan Receipt" onPress={() => {}} variant="outline" size="md" style={styles.addBtn} />
+          <Button title="📸 Scan Receipt" onPress={() => router.push('/receipt-scanner')} variant="outline" size="md" style={styles.addBtn} />
           <Button title="✏️ Manual Entry" onPress={() => {}} variant="outline" size="md" style={styles.addBtn} />
         </View>
         <Button title="📄 Upload Bank Statement" onPress={() => {}} variant="ghost" size="sm" />

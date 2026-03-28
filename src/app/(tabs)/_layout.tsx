@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { colors, shadows } from '../../constants/theme';
 
@@ -20,6 +20,8 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
 }
 
 export default function TabLayout() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <Tabs
@@ -69,7 +71,11 @@ export default function TabLayout() {
       </Tabs>
 
       {/* Floating Voice Button */}
-      <TouchableOpacity style={styles.voiceButton} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={styles.voiceButton}
+        activeOpacity={0.8}
+        onPress={() => router.push('/voice-assistant')}
+      >
         <Text style={styles.voiceEmoji}>🎙️</Text>
       </TouchableOpacity>
     </View>
