@@ -44,8 +44,10 @@ export default function SignUpScreen() {
 
     if (signUpError) {
       setError(signUpError.message);
+    } else {
+      // Navigate to index which handles routing based on auth/onboarding state
+      router.replace('/');
     }
-    // Auth state change will redirect automatically
   };
 
   return (

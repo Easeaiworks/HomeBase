@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -8,6 +9,7 @@ import { useAuthStore } from '../stores/authStore';
 import { colors, typography, spacing } from '../constants/theme';
 
 export default function OnboardingScreen() {
+  const router = useRouter();
   const { createHousehold, joinHousehold, user } = useAuthStore();
   const [mode, setMode] = useState<'choose' | 'create' | 'join'>('choose');
   const [householdName, setHouseholdName] = useState('');
@@ -25,7 +27,12 @@ export default function OnboardingScreen() {
     setLoading(true);
     const { error: err } = await createHousehold(householdName);
     setLoading(false);
-    if (err) setError(err.message);
+    if (err) {
+      setError(err.message);
+    } else {
+      // Household created — navigate to index which routes to home or pending approval
+      router.replace('/');
+    }
   };
 
   const handleJoin = async () => {
@@ -33,10 +40,19 @@ export default function OnboardingScreen() {
       setError('Enter the invite code');
       return;
     }
+    if (!displayName.trim()) {
+      setError('Please enter your name');
+      return;
+    }
     setLoading(true);
     const { error: err } = await joinHousehold(inviteCode, displayName, role);
     setLoading(false);
-    if (err) setError(err.message);
+    if (err) {
+      setError(err.message);
+    } else {
+      // Joined household — navigate to index which routes to pending approval screen
+      router.replace('/');
+    }
   };
 
   return (
@@ -111,8 +127,22 @@ export default function OnboardingScreen() {
               value={displayName}
               onChangeText={setDisplayName}
             />
+            <Text style={styles.roleLabel}>I am a...</Text>
+            <View style={styles.roleRow}>
+              {(['parent', 'teen', 'child'] as const).map((r) => (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.roleChip, role === r && styles.roleChipActive]}
+                  onPress={() => setRole(r)}
+                >
+                  <Text style={[styles.roleChipText, role === r && styles.roleChipTextActive]}>
+                    {r === 'parent' ? 'Parent / Adult' : r === 'teen' ? 'Teen' : 'Child'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <Button title="Join Household" onPress={handleJoin} loading={loading} size="lg" style={styles.button} />
-            <Button title="Back" onPress={() => setMode('choose')} variant="ghost" />
+            <Button title="Back" onPress={() => { setMode('choose'); setError(''); }} variant="ghost" />
           </View>
         )}
       </View>
@@ -139,4 +169,22 @@ const styles = StyleSheet.create({
   optionTitle: { ...typography.h3, color: colors.gray[900], marginBottom: 6 },
   optionDesc: { ...typography.caption, color: colors.gray[500], textAlign: 'center' as const, paddingHorizontal: 12 },
   button: { marginTop: 8, marginBottom: 12, width: '100%' },
+  roleLabel: { ...typography.bodyBold, color: colors.gray[700], marginBottom: 8, marginTop: 4 },
+  roleRow: { flexDirection: 'row' as const, gap: 10, marginBottom: 16 },
+  roleChip: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.gray[200],
+    backgroundColor: colors.white,
+    alignItems: 'center' as const,
+  },
+  roleChipActive: {
+    borderColor: colors.green[500],
+    backgroundColor: colors.green[50],
+  },
+  roleChipText: { ...typography.caption, color: colors.gray[500], fontWeight: '600' as const },
+  roleChipTextActive: { color: colors.green[700] },
 });

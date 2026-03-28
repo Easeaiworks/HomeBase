@@ -29,6 +29,9 @@ export default function SignInScreen() {
 
     if (signInError) {
       setError(signInError.message);
+    } else {
+      // Navigate to index which handles routing based on auth/onboarding state
+      router.replace('/');
     }
   };
 
