@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, typography, spacing, shadows, borderRadius } from '../constants/theme';
 import { useAIAssistant, type ConversationMessage } from '../hooks/useAIAssistant';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import type { AIToolResult } from '../services/aiAssistant';
 
 // Action card for tool results
@@ -33,6 +34,8 @@ function ActionCard({ action }: { action: AIToolResult }) {
     find_local_service: '🏪',
     check_schedule_conflicts: '⏰',
     get_budget_status: '📊',
+    store_receipt: '🧾',
+    search_receipts: '🔍',
   };
 
   const icon = iconMap[action.action] || '✅';
@@ -132,8 +135,17 @@ export default function VoiceAssistantScreen() {
   const router = useRouter();
   const { messages, isLoading, send } = useAIAssistant();
   const [inputText, setInputText] = useState('');
-  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const {
+    isListening,
+    transcript,
+    interimTranscript,
+    isSupported: micSupported,
+    error: speechError,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useSpeechRecognition();
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -144,21 +156,41 @@ export default function VoiceAssistantScreen() {
     }
   }, [messages]);
 
+  // When speech transcript finalizes, put it in the input or auto-send
+  useEffect(() => {
+    if (transcript && !isListening) {
+      // Auto-send when user stops talking
+      const finalText = transcript.trim();
+      if (finalText) {
+        resetTranscript();
+        send(finalText);
+      }
+    }
+  }, [transcript, isListening, resetTranscript, send]);
+
+  // Show interim speech in the input field
+  useEffect(() => {
+    if (isListening && (transcript || interimTranscript)) {
+      setInputText((transcript + ' ' + interimTranscript).trim());
+    }
+  }, [transcript, interimTranscript, isListening]);
+
   const handleSend = async () => {
     if (!inputText.trim()) return;
     const text = inputText;
     setInputText('');
+    resetTranscript();
+    if (isListening) stopListening();
     await send(text);
   };
 
   const handleMicPress = () => {
-    // Toggle listening state — actual speech recognition integration
-    // would use expo-speech or @react-native-voice/voice here
-    setIsListening(!isListening);
-
     if (isListening) {
-      // Stop listening — in real implementation, finalize speech-to-text
-      // and call send() with the transcribed text
+      stopListening();
+    } else {
+      setInputText('');
+      resetTranscript();
+      startListening();
     }
   };
 
@@ -225,21 +257,45 @@ export default function VoiceAssistantScreen() {
           ))}
         </ScrollView>
 
+        {/* Speech error banner */}
+        {speechError && (
+          <View style={styles.speechErrorBanner}>
+            <Text style={styles.speechErrorText}>{speechError}</Text>
+            <TouchableOpacity onPress={() => handleMicPress()}>
+              <Text style={styles.speechRetryText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Listening indicator */}
+        {isListening && (
+          <View style={styles.listeningBanner}>
+            <Text style={styles.listeningDot}>🔴</Text>
+            <Text style={styles.listeningText}>Listening... speak now</Text>
+            <TouchableOpacity onPress={stopListening} style={styles.stopBtn}>
+              <Text style={styles.stopBtnText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Input area */}
         <View style={styles.inputArea}>
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
-              placeholder="Ask HomeBase anything..."
-              placeholderTextColor={colors.gray[400]}
+              placeholder={isListening ? 'Listening...' : 'Ask HomeBase anything...'}
+              placeholderTextColor={isListening ? colors.green[400] : colors.gray[400]}
               value={inputText}
-              onChangeText={setInputText}
+              onChangeText={(text) => {
+                if (!isListening) setInputText(text);
+              }}
               onSubmitEditing={handleSend}
               returnKeyType="send"
               multiline
               maxLength={1000}
+              editable={!isListening}
             />
-            {inputText.trim() ? (
+            {inputText.trim() && !isListening ? (
               <TouchableOpacity
                 style={styles.sendButton}
                 onPress={handleSend}
@@ -251,6 +307,11 @@ export default function VoiceAssistantScreen() {
               <PulseMicButton isListening={isListening} onPress={handleMicPress} />
             )}
           </View>
+          {Platform.OS === 'web' && !micSupported && (
+            <Text style={styles.micUnsupportedText}>
+              Voice input requires Chrome or Edge browser
+            </Text>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -425,4 +486,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEE2E2',
   },
   micEmoji: { fontSize: 18 },
+
+  // Speech recognition UI
+  speechErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FEF2F2',
+    borderTopWidth: 1,
+    borderTopColor: '#FECACA',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
+  },
+  speechErrorText: { ...typography.small, color: '#991B1B', flex: 1, marginRight: 12 },
+  speechRetryText: { ...typography.small, color: colors.green[600], fontWeight: '600' },
+
+  listeningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.green[50],
+    borderTopWidth: 1,
+    borderTopColor: colors.green[200],
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  listeningDot: { fontSize: 12 },
+  listeningText: { ...typography.small, color: colors.green[700], fontWeight: '600' },
+  stopBtn: {
+    backgroundColor: colors.gray[200],
+    borderRadius: borderRadius.sm,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    marginLeft: 8,
+  },
+  stopBtnText: { ...typography.small, color: colors.gray[700], fontWeight: '600' },
+
+  micUnsupportedText: {
+    ...typography.small,
+    color: colors.gray[400],
+    textAlign: 'center',
+    marginTop: 6,
+  },
 });
