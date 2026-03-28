@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "HomeBase",
+    "slug": "homebase",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "homebase",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.ease.homebase",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "HomeBase needs microphone access for voice commands",
+        "NSCameraUsageDescription": "HomeBase needs camera access to scan receipts",
+        "NSContactsUsageDescription": "HomeBase can access your contacts to make communication easier"
+      }
+    },
+    "android": {
+      "package": "ai.ease.homebase",
+      "adaptiveIcon": {
+        "backgroundColor": "#22C55E",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_CONTACTS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "HomeBase needs camera access to scan receipts."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "HomeBase needs photo access to upload receipts."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false,
+        "root": "src/app"
+      }
+    }
+  }
+}
