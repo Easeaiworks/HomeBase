@@ -69,9 +69,9 @@ export default function ExpensesScreen() {
         <Text style={styles.sectionTitle}>Add Expense</Text>
         <View style={styles.addRow}>
           <Button title="📸 Scan Receipt" onPress={() => router.push('/receipt-scanner')} variant="outline" size="md" style={styles.addBtn} />
-          <Button title="✏️ Manual Entry" onPress={() => {}} variant="outline" size="md" style={styles.addBtn} />
+          <Button title="✏️ Manual Entry" onPress={() => router.push('/add-expense')} variant="outline" size="md" style={styles.addBtn} />
         </View>
-        <Button title="📄 Upload Bank Statement" onPress={() => {}} variant="ghost" size="sm" />
+        <Button title="📄 Upload Bank Statement" onPress={() => router.push('/bank-statement')} variant="ghost" size="sm" />
 
         {/* Recent transactions */}
         <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Recent Transactions</Text>

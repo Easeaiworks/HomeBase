@@ -1,6 +1,11 @@
+/**
+ * More Tab
+ * Navigation hub for all features, household settings, and profile
+ */
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
 import { useAuthStore } from '../../stores/authStore';
 import { colors, typography, spacing, shadows } from '../../constants/theme';
@@ -21,7 +26,15 @@ function MenuItem({ emoji, title, subtitle, onPress }: {
 }
 
 export default function MoreScreen() {
+  const router = useRouter();
   const { household, member, signOut } = useAuthStore();
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: signOut },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -52,31 +65,31 @@ export default function MoreScreen() {
         {/* Menu sections */}
         <Text style={styles.sectionTitle}>Features</Text>
         <Card variant="outlined" style={styles.menuCard}>
-          <MenuItem emoji="🍳" title="Recipes" subtitle="Browse and search recipes" onPress={() => {}} />
-          <MenuItem emoji="🔧" title="Home Maintenance" subtitle="Track repairs and reminders" onPress={() => {}} />
-          <MenuItem emoji="🚗" title="Vehicle Care" subtitle="Service schedules and reminders" onPress={() => {}} />
-          <MenuItem emoji="🐾" title="Pet Care" subtitle="Vet visits, meds, and reminders" onPress={() => {}} />
-          <MenuItem emoji="🔍" title="Find Services" subtitle="Local pros with great reviews" onPress={() => {}} />
-          <MenuItem emoji="🧠" title="Ask HomeBase" subtitle="AI assistant for anything" onPress={() => {}} />
+          <MenuItem emoji="🍳" title="Recipes" subtitle="Browse and search recipes" onPress={() => router.push('/recipes')} />
+          <MenuItem emoji="🔧" title="Home Maintenance" subtitle="Track repairs and reminders" onPress={() => router.push('/maintenance')} />
+          <MenuItem emoji="🚗" title="Vehicle Care" subtitle="Service schedules and reminders" onPress={() => router.push('/maintenance')} />
+          <MenuItem emoji="🐾" title="Pet Care" subtitle="Vet visits, meds, and reminders" onPress={() => router.push('/maintenance')} />
+          <MenuItem emoji="🔍" title="Find Services" subtitle="Local pros with great reviews" onPress={() => router.push('/find-services')} />
+          <MenuItem emoji="🧠" title="Ask HomeBase" subtitle="AI assistant for anything" onPress={() => router.push('/voice-assistant')} />
         </Card>
 
         <Text style={styles.sectionTitle}>Household</Text>
         <Card variant="outlined" style={styles.menuCard}>
-          <MenuItem emoji="👨‍👩‍👧‍👦" title="Family Members" subtitle="Manage who's in your household" onPress={() => {}} />
-          <MenuItem emoji="📊" title="Financial Reports" subtitle="Monthly and annual breakdowns" onPress={() => {}} />
-          <MenuItem emoji="📤" title="Export Data" subtitle="PDF or CSV expense reports" onPress={() => {}} />
-          <MenuItem emoji="📋" title="Bank Statement" subtitle="Upload CSV to import expenses" onPress={() => {}} />
+          <MenuItem emoji="👨‍👩‍👧‍👦" title="Family Members" subtitle="Manage who's in your household" onPress={() => router.push('/family-members')} />
+          <MenuItem emoji="📊" title="Financial Reports" subtitle="Monthly and annual breakdowns" onPress={() => router.push('/financial-reports')} />
+          <MenuItem emoji="📤" title="Export Data" subtitle="PDF or CSV expense reports" onPress={() => router.push('/financial-reports')} />
+          <MenuItem emoji="📋" title="Bank Statement" subtitle="Upload CSV to import expenses" onPress={() => router.push('/bank-statement')} />
         </Card>
 
         <Text style={styles.sectionTitle}>Settings</Text>
         <Card variant="outlined" style={styles.menuCard}>
-          <MenuItem emoji="🔔" title="Notifications" subtitle="Configure alerts and reminders" onPress={() => {}} />
-          <MenuItem emoji="🔒" title="Security" subtitle="Password, biometrics, sessions" onPress={() => {}} />
-          <MenuItem emoji="🎨" title="Appearance" subtitle="Theme and display preferences" onPress={() => {}} />
-          <MenuItem emoji="❓" title="Help & Support" subtitle="FAQ and contact us" onPress={() => {}} />
+          <MenuItem emoji="🔔" title="Notifications" subtitle="Configure alerts and reminders" onPress={() => Alert.alert('Coming Soon', 'Notification settings are under development.')} />
+          <MenuItem emoji="🔒" title="Security" subtitle="Password, biometrics, sessions" onPress={() => Alert.alert('Coming Soon', 'Security settings are under development.')} />
+          <MenuItem emoji="🎨" title="Appearance" subtitle="Theme and display preferences" onPress={() => Alert.alert('Coming Soon', 'Appearance settings are under development.')} />
+          <MenuItem emoji="❓" title="Help & Support" subtitle="FAQ and contact us" onPress={() => Alert.alert('Help', 'For support, email help@easeai.ca')} />
         </Card>
 
-        <TouchableOpacity style={styles.signOutBtn} onPress={signOut}>
+        <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
