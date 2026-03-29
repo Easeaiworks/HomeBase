@@ -13,6 +13,9 @@ import {
   ActivityIndicator,
   ImageBackground,
   Dimensions,
+  Image,
+  Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -27,7 +30,7 @@ const GRID_PADDING = spacing.lg;
 const GRID_COLS = 3;
 const GRID_ITEM_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;
 
-// ─── Category Grid Icon ─────────────────────────────────────────────────────
+// âââ Category Grid Icon âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function CategoryIcon({ emoji, label, onPress, color }: {
   emoji: string; label: string; onPress: () => void; color: string;
 }) {
@@ -45,7 +48,7 @@ function CategoryIcon({ emoji, label, onPress, color }: {
   );
 }
 
-// ─── Section Card ────────────────────────────────────────────────────────
+// âââ Section Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function SectionCard({ title, emoji, onPress, children, rightLabel }: {
   title: string; emoji: string; onPress?: () => void; children: React.ReactNode; rightLabel?: string;
 }) {
@@ -91,6 +94,15 @@ export default function HomeScreen() {
   const [groceryItems, setGroceryItems] = useState<string[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenancePreview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Load header image from household
+  useEffect(() => {
+    if (household?.header_image_url) {
+      setHeaderImageUrl(household.header_image_url);
+    }
+  }, [household?.header_image_url]);
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -98,6 +110,98 @@ export default function HomeScreen() {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
+
+  // ── Header Image Upload ─────────────────────────
+  const pickHeaderImage = useCallback(async () => {
+    if (!household?.id) return;
+
+    if (Platform.OS === 'web') {
+      // Web: use file input
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/jpeg,image/png,image/webp';
+      input.onchange = async (e: any) => {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+        await uploadHeaderImage(file);
+      };
+      input.click();
+    } else {
+      // Native: use expo-image-picker
+      try {
+        const ImagePicker = require('expo-image-picker');
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Please allow photo library access to set a header image.');
+          return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [16, 9],
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets[0]) {
+          const uri = result.assets[0].uri;
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          await uploadHeaderImage(blob);
+        }
+      } catch (err) {
+        console.error('Image picker error:', err);
+        Alert.alert('Error', 'Could not open image picker.');
+      }
+    }
+  }, [household?.id]);
+
+  const uploadHeaderImage = useCallback(async (file: Blob | File) => {
+    if (!household?.id) return;
+    setUploadingImage(true);
+
+    try {
+      const ext = file.type?.includes('png') ? 'png' : file.type?.includes('webp') ? 'webp' : 'jpg';
+      const filePath = `${household.id}/header.${ext}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('header-images')
+        .upload(filePath, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('header-images')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl + '?t=' + Date.now();
+
+      // Update household record
+      const { error: updateError } = await supabase
+        .from('households')
+        .update({ header_image_url: publicUrl })
+        .eq('id', household.id);
+
+      if (updateError) throw updateError;
+
+      setHeaderImageUrl(publicUrl);
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      Alert.alert('Upload Failed', err.message || 'Could not upload image.');
+    } finally {
+      setUploadingImage(false);
+    }
+  }, [household?.id]);
+
+  const removeHeaderImage = useCallback(async () => {
+    if (!household?.id) return;
+    try {
+      await supabase.from('households').update({ header_image_url: null }).eq('id', household.id);
+      setHeaderImageUrl(null);
+    } catch (err) {
+      console.error('Remove header image error:', err);
+    }
+  }, [household?.id]);
 
   const loadDashboard = useCallback(async () => {
     if (!household?.id) return;
@@ -180,8 +284,7 @@ export default function HomeScreen() {
   const budgetRemaining = totalBudget - totalSpent;
   const budgetPct = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
   const budgetColor = budgetPct > 90 ? colors.error : budgetPct > 70 ? colors.warning : colors.green[500];
-  const categoryEmoji: Record<string, string> = { home: '🏠', vehicle: '🚗', pet: '🐾', appliance: '🔧' };
-
+  const categoryEmoji: Record<string, string> = { home: 'ð ', vehicle: 'ð', pet: 'ð¾', appliance: 'ð§' };
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -189,30 +292,94 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Hero Section ────────────────────── */}
-        <View style={styles.hero}>
-          <View style={styles.heroOverlay}>
-            <View style={styles.heroTopRow}>
-              <View style={styles.heroLeft}>
-                <Text style={styles.heroGreeting}>{greeting()},</Text>
-                <Text style={styles.heroName}>{member?.display_name || 'Friend'}</Text>
+        {/* ── Hero Section with Optional Background Image ── */}
+        {headerImageUrl ? (
+          <ImageBackground
+            source={{ uri: headerImageUrl }}
+            style={styles.hero}
+            imageStyle={styles.heroImage}
+            resizeMode="cover"
+          >
+            <View style={styles.heroImageOverlay}>
+              <View style={styles.heroTopRow}>
+                <View style={styles.heroLeft}>
+                  <Text style={styles.heroGreeting}>{greeting()},</Text>
+                  <Text style={styles.heroName}>{member?.display_name || 'Friend'}</Text>
+                </View>
+                <TouchableOpacity style={styles.avatarCircle}>
+                  <Text style={styles.avatarText}>
+                    {(member?.display_name || 'U')[0].toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>
-                  {(member?.display_name || 'U')[0].toUpperCase()}
-                </Text>
-              </TouchableOpacity>
+              {household && (
+                <View style={styles.heroBottomRow}>
+                  <View style={styles.householdPill}>
+                    <Text style={styles.householdIcon}>🏡</Text>
+                    <Text style={styles.householdName}>{household.name}</Text>
+                  </View>
+                  <View style={styles.headerImageActions}>
+                    <TouchableOpacity
+                      style={styles.cameraBtn}
+                      onPress={pickHeaderImage}
+                      activeOpacity={0.7}
+                    >
+                      {uploadingImage ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={styles.cameraBtnIcon}>📷</Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.cameraBtn}
+                      onPress={removeHeaderImage}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.cameraBtnIcon}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
-            {household && (
-              <View style={styles.householdPill}>
-                <Text style={styles.householdIcon}>🏡</Text>
-                <Text style={styles.householdName}>{household.name}</Text>
+          </ImageBackground>
+        ) : (
+          <View style={styles.hero}>
+            <View style={styles.heroOverlay}>
+              <View style={styles.heroTopRow}>
+                <View style={styles.heroLeft}>
+                  <Text style={styles.heroGreeting}>{greeting()},</Text>
+                  <Text style={styles.heroName}>{member?.display_name || 'Friend'}</Text>
+                </View>
+                <TouchableOpacity style={styles.avatarCircle}>
+                  <Text style={styles.avatarText}>
+                    {(member?.display_name || 'U')[0].toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            )}
+              {household && (
+                <View style={styles.heroBottomRow}>
+                  <View style={styles.householdPill}>
+                    <Text style={styles.householdIcon}>🏡</Text>
+                    <Text style={styles.householdName}>{household.name}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.cameraBtn}
+                    onPress={pickHeaderImage}
+                    activeOpacity={0.7}
+                  >
+                    {uploadingImage ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.cameraBtnIcon}>📷</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* ── Trial Banner ────────────────────── */}
+        {/* ââ Trial Banner ââââââââââââââââââââââ */}
         {isTrialActive && !isSubscribed && (
           <TouchableOpacity
             style={styles.trialBanner}
@@ -221,20 +388,20 @@ export default function HomeScreen() {
           >
             <Text style={styles.trialText}>
               {trialDaysRemaining <= 3
-                ? '⚠️ Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' — Upgrade now'
-                : '✨ Free trial: ' + trialDaysRemaining + ' days remaining'}
+                ? 'â ï¸ Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' â Upgrade now'
+                : 'â¨ Free trial: ' + trialDaysRemaining + ' days remaining'}
             </Text>
           </TouchableOpacity>
         )}
 
-        {/* ── Search + Ask Bar ────────────────── */}
+        {/* ââ Search + Ask Bar ââââââââââââââââââ */}
         <View style={styles.searchRow}>
           <TouchableOpacity
             style={styles.searchBar}
             onPress={() => router.push('/voice-assistant')}
             activeOpacity={0.7}
           >
-            <Text style={styles.searchIcon}>🔍</Text>
+            <Text style={styles.searchIcon}>ð</Text>
             <Text style={styles.searchPlaceholder}>Search HomeBase...</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -242,26 +409,26 @@ export default function HomeScreen() {
             onPress={() => router.push('/voice-assistant')}
             activeOpacity={0.7}
           >
-            <Text style={styles.askIcon}>🗣️</Text>
+            <Text style={styles.askIcon}>ð£ï¸</Text>
             <Text style={styles.askLabel}>Ask</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Category Grid (2 rows × 3 cols) ────── */}
+        {/* ââ Category Grid (2 rows Ã 3 cols) ââââââ */}
         <View style={styles.categoryGrid}>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="📅" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
-            <CategoryIcon emoji="💰" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
-            <CategoryIcon emoji="🛒" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
+            <CategoryIcon emoji="ð" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
+            <CategoryIcon emoji="ð°" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
+            <CategoryIcon emoji="ð" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
           </View>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="🍳" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
-            <CategoryIcon emoji="🔧" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
-            <CategoryIcon emoji="📸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
+            <CategoryIcon emoji="ð³" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
+            <CategoryIcon emoji="ð§" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
+            <CategoryIcon emoji="ð¸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
           </View>
         </View>
 
-        {/* ── Dashboard Cards ───────────────────── */}
+        {/* ââ Dashboard Cards âââââââââââââââââââââ */}
         {isLoading ? (
           <ActivityIndicator color={colors.green[500]} style={{ marginTop: 24 }} />
         ) : (
@@ -269,7 +436,7 @@ export default function HomeScreen() {
             {/* Today's Schedule */}
             <SectionCard
               title="Today's Schedule"
-              emoji="📅"
+              emoji="ð"
               onPress={() => router.push('/(tabs)/calendar')}
             >
               {todayEvents.length > 0 ? (
@@ -283,7 +450,7 @@ export default function HomeScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.eventName}>{event.title}</Text>
                       {event.location && (
-                        <Text style={styles.eventLoc}>📍 {event.location}</Text>
+                        <Text style={styles.eventLoc}>ð {event.location}</Text>
                       )}
                     </View>
                   </View>
@@ -299,7 +466,7 @@ export default function HomeScreen() {
             {/* Budget Snapshot */}
             <SectionCard
               title="This Month"
-              emoji="💰"
+              emoji="ð°"
               onPress={() => router.push('/(tabs)/expenses')}
             >
               <View style={styles.budgetRow}>
@@ -332,7 +499,7 @@ export default function HomeScreen() {
             {/* Grocery List */}
             <SectionCard
               title="Grocery List"
-              emoji="🛒"
+              emoji="ð"
               onPress={() => router.push('/(tabs)/lists')}
               rightLabel={groceryCount > 0 ? groceryCount + ' items' : undefined}
             >
@@ -359,7 +526,7 @@ export default function HomeScreen() {
             {/* Upcoming Maintenance */}
             <SectionCard
               title="Maintenance"
-              emoji="🔧"
+              emoji="ð§"
               onPress={() => router.push('/maintenance')}
             >
               {maintenance.length > 0 ? (
@@ -376,7 +543,7 @@ export default function HomeScreen() {
                           </Text>
                         )}
                       </View>
-                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || '🔧'}</Text>
+                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || 'ð§'}</Text>
                     </View>
                   );
                 })
@@ -389,27 +556,27 @@ export default function HomeScreen() {
             </SectionCard>
 
             {/* Quick Tips */}
-            <SectionCard title="Quick Tips" emoji="💡">
+            <SectionCard title="Quick Tips" emoji="ð¡">
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>📖</Text>
+                  <Text style={styles.tipIcon}>ð</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Guides</Text>
                   <Text style={styles.tipDesc}>Tips for managing your home</Text>
                 </View>
-                <Text style={styles.tipArrow}>›</Text>
+                <Text style={styles.tipArrow}>âº</Text>
               </View>
               <View style={styles.tipDivider} />
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>⭐</Text>
+                  <Text style={styles.tipIcon}>â­</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Favorites</Text>
                   <Text style={styles.tipDesc}>Quick access to your most used items</Text>
                 </View>
-                <Text style={styles.tipArrow}>›</Text>
+                <Text style={styles.tipArrow}>âº</Text>
               </View>
             </SectionCard>
           </>
@@ -426,7 +593,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
 
-  // ── Hero ──────────────────────────────────────────
+  // ââ Hero ââââââââââââââââââââââââââââââââââââââââââ
   hero: {
     backgroundColor: colors.green[600],
     paddingTop: 8,
@@ -450,9 +617,62 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: 'rgba(255,255,255,0.80)',
   },
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 20 },
+
+  // ── Hero ──────────────────────────────────
+  hero: {
+    backgroundColor: colors.green[600],
+    paddingTop: 8,
+    paddingBottom: 24,
+    paddingHorizontal: GRID_PADDING,
+    borderBottomLeftRadius: borderRadius['2xl'],
+    borderBottomRightRadius: borderRadius['2xl'],
+    marginBottom: 16,
+    minHeight: 140,
+    overflow: 'hidden',
+    ...shadows.lg,
+    shadowColor: colors.green[700],
+  },
+  heroImage: {
+    borderBottomLeftRadius: borderRadius['2xl'],
+    borderBottomRightRadius: borderRadius['2xl'],
+  },
+  heroImageOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.40)',
+    paddingTop: 8,
+    paddingBottom: 24,
+    paddingHorizontal: GRID_PADDING,
+    borderBottomLeftRadius: borderRadius['2xl'],
+    borderBottomRightRadius: borderRadius['2xl'],
+  },
+  heroOverlay: {},
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  heroLeft: {},
+  heroBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  heroGreeting: {
+    ...typography.body,
+    color: 'rgba(255,255,255,0.80)',
+  },
   heroName: {
     ...typography.h1,
     color: colors.white,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   avatarCircle: {
     width: 48,
@@ -479,7 +699,27 @@ const styles = StyleSheet.create({
   householdIcon: { fontSize: 14 },
   householdName: { ...typography.caption, color: colors.white, fontWeight: '600' },
 
-  // ── Trial Banner ────────────────────────────────────
+  // ── Header Image Controls ──────────────────
+  headerImageActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cameraBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
+  },
+  cameraBtnIcon: {
+    fontSize: 16,
+    color: colors.white,
+  },
+
+  // ââ Trial Banner ââââââââââââââââââââââââââââââââââââ
   trialBanner: {
     backgroundColor: 'rgba(59,130,246,0.08)',
     paddingVertical: 10,
@@ -493,7 +733,7 @@ const styles = StyleSheet.create({
   },
   trialText: { ...typography.caption, color: colors.blue[700], fontWeight: '600', textAlign: 'center' as const },
 
-  // ── Search + Ask Bar ────────────────────────────────
+  // ââ Search + Ask Bar ââââââââââââââââââââââââââââââââ
   searchRow: {
     flexDirection: 'row',
     gap: 10,
@@ -528,7 +768,7 @@ const styles = StyleSheet.create({
   askIcon: { fontSize: 16 },
   askLabel: { ...typography.bodyBold, color: colors.white },
 
-  // ── Category Grid ───────────────────────────────────
+  // ââ Category Grid âââââââââââââââââââââââââââââââââââ
   categoryGrid: {
     paddingHorizontal: GRID_PADDING,
     marginBottom: 20,
@@ -555,7 +795,7 @@ const styles = StyleSheet.create({
   categoryEmoji: { fontSize: 26 },
   categoryLabel: { ...typography.small, color: colors.gray[600], fontWeight: '600' },
 
-  // ── Section Cards ──────────────────────────────────
+  // ââ Section Cards ââââââââââââââââââââââââââââââââââ
   sectionCard: {
     marginHorizontal: GRID_PADDING,
     marginBottom: 14,
@@ -576,7 +816,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.bodyBold, color: colors.gray[900] },
   sectionAction: { ...typography.caption, color: colors.green[600], fontWeight: '600' },
 
-  // ── Events ─────────────────────────────────────────
+  // ââ Events âââââââââââââââââââââââââââââââââââââââââ
   eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -595,7 +835,7 @@ const styles = StyleSheet.create({
   eventName: { ...typography.body, color: colors.gray[900] },
   eventLoc: { ...typography.small, color: colors.gray[400], marginTop: 2 },
 
-  // ── Budget ─────────────────────────────────────────
+  // ââ Budget âââââââââââââââââââââââââââââââââââââââââ
   budgetRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -623,7 +863,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 
-  // ── Grocery ────────────────────────────────────────
+  // ââ Grocery ââââââââââââââââââââââââââââââââââââââââ
   groceryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -642,7 +882,7 @@ const styles = StyleSheet.create({
   groceryName: { ...typography.body, color: colors.gray[700] },
   groceryMore: { ...typography.small, color: colors.gray[400], marginTop: 8, textAlign: 'center' as const },
 
-  // ── Maintenance ────────────────────────────────────
+  // ââ Maintenance ââââââââââââââââââââââââââââââââââââ
   maintRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -661,12 +901,12 @@ const styles = StyleSheet.create({
   maintDue: { ...typography.small, color: colors.gray[400], marginTop: 2 },
   maintCatEmoji: { fontSize: 18 },
 
-  // ── Empty State ────────────────────────────────────
+  // ââ Empty State ââââââââââââââââââââââââââââââââââââ
   emptyState: { alignItems: 'center', paddingVertical: 16 },
   emptyText: { ...typography.body, color: colors.gray[400] },
   emptyHint: { ...typography.small, color: colors.gray[300], marginTop: 4 },
 
-  // ── Tips ───────────────────────────────────────────
+  // ââ Tips âââââââââââââââââââââââââââââââââââââââââââ
   tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
