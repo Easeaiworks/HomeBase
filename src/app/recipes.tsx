@@ -18,6 +18,7 @@ import {
   FlatList,
   Platform,
 } from 'react-native';
+import { PressableScale } from '../components/ui/PressableScale';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Card } from '../components/ui/Card';
@@ -71,7 +72,7 @@ function IngredientChip({ name, onRemove }: { name: string; onRemove: () => void
     <View style={styles.chip}>
       <Text style={styles.chipText}>{name}</Text>
       <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Text style={styles.chipRemove}>×</Text>
+        <Text style={styles.chipRemove}>Ã</Text>
       </TouchableOpacity>
     </View>
   );
@@ -79,7 +80,7 @@ function IngredientChip({ name, onRemove }: { name: string; onRemove: () => void
 
 // ---- Video Link Button ----
 function VideoLink({ title, platform, onPress }: { title: string; platform: 'youtube' | 'instagram'; onPress: () => void }) {
-  const icon = platform === 'youtube' ? '▶️' : '📷';
+  const icon = platform === 'youtube' ? 'â¶ï¸' : 'ð·';
   const label = platform === 'youtube' ? 'YouTube' : 'Instagram';
   const bg = platform === 'youtube' ? '#FF000015' : '#E1306C15';
   const color = platform === 'youtube' ? '#FF0000' : '#E1306C';
@@ -107,19 +108,19 @@ function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () => void }
       <View style={styles.cardInfo}>
         {totalTime > 0 && (
           <View style={styles.infoItem}>
-            <Text style={styles.infoIcon}>⏱️</Text>
+            <Text style={styles.infoIcon}>â±ï¸</Text>
             <Text style={styles.infoText}>{totalTime} min</Text>
           </View>
         )}
         {recipe.servings && (
           <View style={styles.infoItem}>
-            <Text style={styles.infoIcon}>🍽️</Text>
+            <Text style={styles.infoIcon}>ð½ï¸</Text>
             <Text style={styles.infoText}>{recipe.servings} servings</Text>
           </View>
         )}
         {recipe.rating && (
           <View style={styles.infoItem}>
-            <Text style={styles.infoIcon}>⭐</Text>
+            <Text style={styles.infoIcon}>â­</Text>
             <Text style={styles.infoText}>{recipe.rating}</Text>
           </View>
         )}
@@ -150,24 +151,24 @@ function AISuggestionCard({ suggestion, onSave, onYouTube, onInstagram }: {
     <Card style={styles.suggestionCard}>
       <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
         <View style={styles.suggestionHeader}>
-          <Text style={styles.suggestionEmoji}>🍳</Text>
+          <Text style={styles.suggestionEmoji}>ð³</Text>
           <View style={{ flex: 1 }}>
             <Text style={styles.suggestionTitle}>{suggestion.title}</Text>
             <Text style={styles.suggestionDesc} numberOfLines={expanded ? undefined : 2}>
               {suggestion.description}
             </Text>
           </View>
-          <Text style={styles.expandIcon}>{expanded ? '▲' : '▼'}</Text>
+          <Text style={styles.expandIcon}>{expanded ? 'â²' : 'â¼'}</Text>
         </View>
       </TouchableOpacity>
 
       {/* Time badges */}
       <View style={styles.timeBadges}>
         <View style={styles.timeBadge}>
-          <Text style={styles.timeBadgeText}>⏱ {suggestion.prep_time + suggestion.cook_time} min</Text>
+          <Text style={styles.timeBadgeText}>â± {suggestion.prep_time + suggestion.cook_time} min</Text>
         </View>
         <View style={styles.timeBadge}>
-          <Text style={styles.timeBadgeText}>🍽 {suggestion.servings} servings</Text>
+          <Text style={styles.timeBadgeText}>ð½ {suggestion.servings} servings</Text>
         </View>
       </View>
 
@@ -175,7 +176,7 @@ function AISuggestionCard({ suggestion, onSave, onYouTube, onInstagram }: {
         <View style={styles.suggestionDetails}>
           <Text style={styles.detailLabel}>Ingredients:</Text>
           {suggestion.ingredients.map((ing, i) => (
-            <Text key={i} style={styles.detailItem}>• {ing}</Text>
+            <Text key={i} style={styles.detailItem}>â¢ {ing}</Text>
           ))}
 
           <Text style={[styles.detailLabel, { marginTop: 12 }]}>Steps:</Text>
@@ -188,7 +189,7 @@ function AISuggestionCard({ suggestion, onSave, onYouTube, onInstagram }: {
       {/* Action buttons: Save + Video links */}
       <View style={styles.suggestionActions}>
         <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
-          <Text style={styles.saveBtnText}>💾 Save Recipe</Text>
+          <Text style={styles.saveBtnText}>ð¾ Save Recipe</Text>
         </TouchableOpacity>
         <VideoLink title={suggestion.title} platform="youtube" onPress={onYouTube} />
         <VideoLink title={suggestion.title} platform="instagram" onPress={onInstagram} />
@@ -220,7 +221,7 @@ function RecipeDetailModal({ recipe, visible, onClose }: {
       <SafeAreaView style={styles.modalContainer} edges={['top']}>
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeIcon}>✕</Text>
+            <Text style={styles.closeIcon}>â</Text>
           </TouchableOpacity>
           <Text style={styles.modalTitle} numberOfLines={1}>{recipe.title}</Text>
           <View style={{ width: 40 }} />
@@ -230,21 +231,21 @@ function RecipeDetailModal({ recipe, visible, onClose }: {
           {/* Quick info */}
           <View style={styles.quickInfo}>
             <View style={styles.quickInfoItem}>
-              <Text style={styles.quickInfoIcon}>⏱️</Text>
+              <Text style={styles.quickInfoIcon}>â±ï¸</Text>
               <Text style={styles.quickInfoLabel}>Prep</Text>
               <Text style={styles.quickInfoValue}>{recipe.prep_time_min || 0} min</Text>
             </View>
             <View style={styles.quickInfoDivider} />
             <View style={styles.quickInfoItem}>
-              <Text style={styles.quickInfoIcon}>🍳</Text>
+              <Text style={styles.quickInfoIcon}>ð³</Text>
               <Text style={styles.quickInfoLabel}>Cook</Text>
               <Text style={styles.quickInfoValue}>{recipe.cook_time_min || 0} min</Text>
             </View>
             <View style={styles.quickInfoDivider} />
             <View style={styles.quickInfoItem}>
-              <Text style={styles.quickInfoIcon}>🍽️</Text>
+              <Text style={styles.quickInfoIcon}>ð½ï¸</Text>
               <Text style={styles.quickInfoLabel}>Servings</Text>
-              <Text style={styles.quickInfoValue}>{recipe.servings || '—'}</Text>
+              <Text style={styles.quickInfoValue}>{recipe.servings || 'â'}</Text>
             </View>
           </View>
 
@@ -266,7 +267,7 @@ function RecipeDetailModal({ recipe, visible, onClose }: {
           <Text style={styles.sectionTitle}>Ingredients</Text>
           {ingredients.map((ing, idx) => (
             <View key={idx} style={styles.ingredientRow}>
-              <Text style={styles.ingredientBullet}>•</Text>
+              <Text style={styles.ingredientBullet}>â¢</Text>
               <Text style={styles.ingredientText}>{ing}</Text>
             </View>
           ))}
@@ -461,7 +462,7 @@ export default function RecipesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>â</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Recipes</Text>
         <View style={{ width: 40 }} />
@@ -472,7 +473,7 @@ export default function RecipesScreen() {
         {/* ---- What's in your fridge? ---- */}
         <Card style={styles.fridgeCard}>
           <View style={styles.fridgeHeader}>
-            <Text style={styles.fridgeEmoji}>🧊</Text>
+            <Text style={styles.fridgeEmoji}>ð§</Text>
             <View style={{ flex: 1 }}>
               <Text style={styles.fridgeTitle}>What's in your fridge?</Text>
               <Text style={styles.fridgeSubtitle}>Add ingredients and get recipe ideas</Text>
@@ -522,7 +523,7 @@ export default function RecipesScreen() {
 
           {/* Find Recipes button */}
           <Button
-            title={isAiLoading ? 'Finding recipes...' : '🍳 Find Recipes with These Ingredients'}
+            title={isAiLoading ? 'Finding recipes...' : 'ð³ Find Recipes with These Ingredients'}
             onPress={askAiForRecipes}
             variant="primary"
             loading={isAiLoading}
@@ -533,7 +534,7 @@ export default function RecipesScreen() {
         {/* ---- AI Suggestions ---- */}
         {aiSuggestions.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>✨ AI Suggestions ({aiSuggestions.length})</Text>
+            <Text style={styles.sectionHeader}>â¨ AI Suggestions ({aiSuggestions.length})</Text>
             {aiSuggestions.map((suggestion, idx) => (
               <AISuggestionCard
                 key={idx}
@@ -556,7 +557,7 @@ export default function RecipesScreen() {
         {/* ---- Search saved recipes ---- */}
         <View style={styles.section}>
           <View style={styles.savedHeader}>
-            <Text style={styles.sectionHeader}>📚 My Recipes</Text>
+            <Text style={styles.sectionHeader}>ð My Recipes</Text>
           </View>
 
           <View style={styles.searchRow}>
@@ -585,7 +586,7 @@ export default function RecipesScreen() {
           ) : (
             <Card variant="outlined" style={styles.emptyCard}>
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>🍳</Text>
+                <Text style={styles.emptyEmoji}>ð³</Text>
                 <Text style={styles.emptyTitle}>
                   {searchText ? 'No recipes found' : 'No saved recipes yet'}
                 </Text>
