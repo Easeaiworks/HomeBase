@@ -7,14 +7,14 @@ import { Button } from '../../components/ui/Button';
 import { colors, typography, spacing, shadows } from '../../constants/theme';
 
 const CATEGORIES = [
-  { emoji: 'Ã°ÂÂÂ ', name: 'House', color: colors.blue[500] },
-  { emoji: 'Ã°ÂÂÂ¬', name: 'Entertainment', color: colors.teal[500] },
-  { emoji: 'Ã°ÂÂÂ¶', name: 'Kids', color: colors.green[500] },
-  { emoji: 'Ã°ÂÂÂ', name: 'Groceries', color: colors.green[600] },
-  { emoji: 'Ã°ÂÂÂ', name: 'Vehicle', color: colors.gray[600] },
-  { emoji: 'Ã°ÂÂÂ¥', name: 'Health', color: colors.error },
-  { emoji: 'Ã°ÂÂÂ±', name: 'Subscriptions', color: colors.blue[700] },
-  { emoji: 'Ã¢ÂÂ', name: 'Add New', color: colors.gray[300] },
+  { emoji: 'ð ', name: 'House', color: colors.blue[500] },
+  { emoji: 'ð¬', name: 'Entertainment', color: colors.teal[500] },
+  { emoji: 'ð¶', name: 'Kids', color: colors.green[500] },
+  { emoji: 'ð', name: 'Groceries', color: colors.green[600] },
+  { emoji: 'ð', name: 'Vehicle', color: colors.gray[600] },
+  { emoji: 'ð¥', name: 'Health', color: colors.error },
+  { emoji: 'ð±', name: 'Subscriptions', color: colors.blue[700] },
+  { emoji: 'â', name: 'Add New', color: colors.gray[300] },
 ];
 
 export default function ExpensesScreen() {
@@ -50,7 +50,7 @@ export default function ExpensesScreen() {
           <View style={styles.budgetBar}>
             <View style={[styles.budgetFill, { width: '0%' }]} />
           </View>
-          <Text style={styles.budgetNote}>No budget set Ã¢ÂÂ tap to create one</Text>
+          <Text style={styles.budgetNote}>No budget set â tap to create one</Text>
         </Card>
 
         {/* Categories */}
@@ -68,16 +68,16 @@ export default function ExpensesScreen() {
         {/* Quick add buttons */}
         <Text style={styles.sectionTitle}>Add Expense</Text>
         <View style={styles.addRow}>
-          <Button title="Ã°ÂÂÂ¸ Scan Receipt" onPress={() => router.push('/receipt-scanner')} variant="outline" size="md" style={styles.addBtn} />
-          <Button title="Ã¢ÂÂÃ¯Â¸Â Manual Entry" onPress={() => router.push('/add-expense')} variant="outline" size="md" style={styles.addBtn} />
+          <Button title="ð¸ Scan Receipt" onPress={() => router.push('/receipt-scanner')} variant="outline" size="md" style={styles.addBtn} />
+          <Button title="âï¸ Manual Entry" onPress={() => router.push('/add-expense')} variant="outline" size="md" style={styles.addBtn} />
         </View>
-        <Button title="Ã°ÂÂÂ Upload Bank Statement" onPress={() => router.push('/bank-statement')} variant="ghost" size="sm" />
+        <Button title="ð Upload Bank Statement" onPress={() => router.push('/bank-statement')} variant="ghost" size="sm" />
 
         {/* Recent transactions */}
         <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Recent Transactions</Text>
         <Card variant="outlined">
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>Ã°ÂÂÂ°</Text>
+            <Text style={styles.emptyEmoji}>ð°</Text>
             <Text style={styles.emptyText}>No expenses recorded yet</Text>
             <Text style={styles.emptySubtext}>Scan a receipt or add one manually</Text>
           </View>
