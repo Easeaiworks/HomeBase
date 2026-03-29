@@ -198,13 +198,13 @@ export default function CalendarScreen() {
         <Card>
           <View style={styles.monthNav}>
             <TouchableOpacity onPress={prevMonth}>
-              <Text style={styles.navArrow}>â¹</Text>
+              <Text style={styles.navArrow}>‹</Text>
             </TouchableOpacity>
             <Text style={styles.monthLabel}>
               {MONTHS[currentMonth]} {currentYear}
             </Text>
             <TouchableOpacity onPress={nextMonth}>
-              <Text style={styles.navArrow}>âº</Text>
+              <Text style={styles.navArrow}>›</Text>
             </TouchableOpacity>
           </View>
 
@@ -273,7 +273,7 @@ export default function CalendarScreen() {
                 <View style={styles.eventInfo}>
                   <Text style={styles.eventTitle}>{event.title}</Text>
                   {event.location && (
-                    <Text style={styles.eventLocation}>ð {event.location}</Text>
+                    <Text style={styles.eventLocation}>📍 {event.location}</Text>
                   )}
                   {event.description && (
                     <Text style={styles.eventDesc} numberOfLines={2}>{event.description}</Text>
@@ -284,7 +284,7 @@ export default function CalendarScreen() {
           ) : (
             <Card variant="outlined">
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>ð</Text>
+                <Text style={styles.emptyEmoji}>📅</Text>
                 <Text style={styles.emptyText}>No events scheduled</Text>
                 <Button
                   title="Add Event"
@@ -308,7 +308,7 @@ export default function CalendarScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Event</Text>
               <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <Text style={styles.modalClose}>â</Text>
+                <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
 
