@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { PressableScale } from '../../components/ui/PressableScale';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
@@ -14,14 +15,14 @@ function MenuItem({ emoji, title, subtitle, onPress }: {
   emoji: string; title: string; subtitle: string; onPress: () => void;
 }) {
   return (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+    <PressableScale style={styles.menuItem} activeScale={0.97} glowColor="#22C55E" onPress={onPress} activeOpacity={0.7}>
       <Text style={styles.menuEmoji}>{emoji}</Text>
       <View style={styles.menuText}>
         <Text style={styles.menuTitle}>{title}</Text>
         <Text style={styles.menuSubtitle}>{subtitle}</Text>
       </View>
-      <Text style={styles.menuArrow}>›</Text>
-    </TouchableOpacity>
+      <Text style={styles.menuArrow}>âº</Text>
+    </PressableScale>
   );
 }
 
@@ -52,7 +53,7 @@ export default function MoreScreen() {
             </View>
             <View>
               <Text style={styles.profileName}>{member?.display_name || 'User'}</Text>
-              <Text style={styles.profileRole}>{member?.role || 'Member'} · {household?.name}</Text>
+              <Text style={styles.profileRole}>{member?.role || 'Member'} Â· {household?.name}</Text>
             </View>
           </View>
           {household && (
@@ -66,20 +67,20 @@ export default function MoreScreen() {
         {/* Menu sections */}
         <Text style={styles.sectionTitle}>Features</Text>
         <Card variant="outlined" style={styles.menuCard}>
-          <MenuItem emoji="🍳" title="Recipes" subtitle="Browse and search recipes" onPress={() => router.push('/recipes')} />
-          <MenuItem emoji="🔧" title="Home Maintenance" subtitle="Track repairs and reminders" onPress={() => router.push('/maintenance')} />
-          <MenuItem emoji="🚗" title="Vehicle Care" subtitle="Service schedules and reminders" onPress={() => router.push('/maintenance')} />
-          <MenuItem emoji="🐾" title="Pet Care" subtitle="Vet visits, meds, and reminders" onPress={() => router.push('/maintenance')} />
-          <MenuItem emoji="🔍" title="Find Services" subtitle="Local pros with great reviews" onPress={() => router.push('/find-services')} />
-          <MenuItem emoji="🧠" title="Ask HomeBase" subtitle="AI assistant for anything" onPress={() => router.push('/voice-assistant')} />
+          <MenuItem emoji="ð³" title="Recipes" subtitle="Browse and search recipes" onPress={() => router.push('/recipes')} />
+          <MenuItem emoji="ð§" title="Home Maintenance" subtitle="Track repairs and reminders" onPress={() => router.push('/maintenance')} />
+          <MenuItem emoji="ð" title="Vehicle Care" subtitle="Service schedules and reminders" onPress={() => router.push('/maintenance')} />
+          <MenuItem emoji="ð¾" title="Pet Care" subtitle="Vet visits, meds, and reminders" onPress={() => router.push('/maintenance')} />
+          <MenuItem emoji="ð" title="Find Services" subtitle="Local pros with great reviews" onPress={() => router.push('/find-services')} />
+          <MenuItem emoji="ð§ " title="Ask HomeBase" subtitle="AI assistant for anything" onPress={() => router.push('/voice-assistant')} />
         </Card>
 
         <Text style={styles.sectionTitle}>Household</Text>
         <Card variant="outlined" style={styles.menuCard}>
-          <MenuItem emoji="👨‍👩‍👧‍👦" title="Family Members" subtitle="Manage who's in your household" onPress={() => router.push('/family-members')} />
-          <MenuItem emoji="📊" title="Financial Reports" subtitle="Monthly and annual breakdowns" onPress={() => router.push('/financial-reports')} />
-          <MenuItem emoji="📤" title="Export Data" subtitle="PDF or CSV expense reports" onPress={() => router.push('/financial-reports')} />
-          <MenuItem emoji="📋" title="Bank Statement" subtitle="Upload CSV to import expenses" onPress={() => router.push('/bank-statement')} />
+          <MenuItem emoji="ð¨âð©âð§âð¦" title="Family Members" subtitle="Manage who's in your household" onPress={() => router.push('/family-members')} />
+          <MenuItem emoji="ð" title="Financial Reports" subtitle="Monthly and annual breakdowns" onPress={() => router.push('/financial-reports')} />
+          <MenuItem emoji="ð¤" title="Export Data" subtitle="PDF or CSV expense reports" onPress={() => router.push('/financial-reports')} />
+          <MenuItem emoji="ð" title="Bank Statement" subtitle="Upload CSV to import expenses" onPress={() => router.push('/bank-statement')} />
         </Card>
 
         {/* Admin section */}
@@ -88,10 +89,10 @@ export default function MoreScreen() {
             <Text style={styles.sectionTitle}>Administration</Text>
             <Card variant="outlined" style={styles.menuCard}>
               {isSuperAdmin && (
-                <MenuItem emoji="🛡️" title="Admin Panel" subtitle="Manage all users and households" onPress={() => router.push('/admin')} />
+                <MenuItem emoji="ð¡ï¸" title="Admin Panel" subtitle="Manage all users and households" onPress={() => router.push('/admin')} />
               )}
               {isParent && (
-                <MenuItem emoji="👥" title="Manage Members" subtitle="Approve and manage family members" onPress={() => router.push('/parent-admin')} />
+                <MenuItem emoji="ð¥" title="Manage Members" subtitle="Approve and manage family members" onPress={() => router.push('/parent-admin')} />
               )}
             </Card>
           </>
@@ -101,7 +102,7 @@ export default function MoreScreen() {
         <Text style={styles.sectionTitle}>Subscription</Text>
         <Card variant="outlined" style={styles.menuCard}>
           <MenuItem
-            emoji={isSubscribed ? '✅' : isTrialActive ? '⏳' : '💳'}
+            emoji={isSubscribed ? 'â' : isTrialActive ? 'â³' : 'ð³'}
             title={isSubscribed ? 'Manage Subscription' : isTrialActive ? `Trial: ${trialDaysRemaining} days left` : 'Upgrade Plan'}
             subtitle={isSubscribed ? 'View plan, billing, and invoices' : 'Choose a plan to keep using HomeBase'}
             onPress={() => router.push('/subscription')}
@@ -110,17 +111,17 @@ export default function MoreScreen() {
 
         <Text style={styles.sectionTitle}>Settings</Text>
         <Card variant="outlined" style={styles.menuCard}>
-          <MenuItem emoji="🔔" title="Notifications" subtitle="Configure alerts and reminders" onPress={() => Alert.alert('Coming Soon', 'Notification settings are under development.')} />
-          <MenuItem emoji="🔒" title="Security" subtitle="Password, biometrics, sessions" onPress={() => Alert.alert('Coming Soon', 'Security settings are under development.')} />
-          <MenuItem emoji="🎨" title="Appearance" subtitle="Theme and display preferences" onPress={() => Alert.alert('Coming Soon', 'Appearance settings are under development.')} />
-          <MenuItem emoji="❓" title="Help & Support" subtitle="FAQ and contact us" onPress={() => Alert.alert('Help', 'For support, email help@easeai.ca')} />
+          <MenuItem emoji="ð" title="Notifications" subtitle="Configure alerts and reminders" onPress={() => Alert.alert('Coming Soon', 'Notification settings are under development.')} />
+          <MenuItem emoji="ð" title="Security" subtitle="Password, biometrics, sessions" onPress={() => Alert.alert('Coming Soon', 'Security settings are under development.')} />
+          <MenuItem emoji="ð¨" title="Appearance" subtitle="Theme and display preferences" onPress={() => Alert.alert('Coming Soon', 'Appearance settings are under development.')} />
+          <MenuItem emoji="â" title="Help & Support" subtitle="FAQ and contact us" onPress={() => Alert.alert('Help', 'For support, email help@easeai.ca')} />
         </Card>
 
-        <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
+        <PressableScale style={styles.signOutBtn} activeScale={0.95} glowColor="#EF4444" onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
+        </PressableScale>
 
-        <Text style={styles.version}>HomeBase v1.0.0 · Ease AI</Text>
+        <Text style={styles.version}>HomeBase v1.0.0 Â· Ease AI</Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>
