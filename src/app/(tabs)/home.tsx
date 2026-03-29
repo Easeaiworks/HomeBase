@@ -1,5 +1,5 @@
 /**
- * Home Dashboard Tab â Homer-inspired layout
+ * Home Dashboard Tab — Homer-inspired layout
  * Hero section with household name, search + ask bar,
  * 2x3 grid of category icons, stacked dashboard cards
  */
@@ -13,14 +13,10 @@ import {
   ActivityIndicator,
   ImageBackground,
   Dimensions,
-  Image,
-  Alert,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
-import { PressableScale } from '../../components/ui/PressableScale';
 import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabase';
 import { colors, typography, spacing, shadows, borderRadius } from '../../constants/theme';
@@ -31,31 +27,30 @@ const GRID_PADDING = spacing.lg;
 const GRID_COLS = 3;
 const GRID_ITEM_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;
 
-// âââ Category Grid Icon âââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Category Grid Icon ─────────────────────────────────────────────────────
 function CategoryIcon({ emoji, label, onPress, color }: {
   emoji: string; label: string; onPress: () => void; color: string;
 }) {
   return (
-    <PressableScale
+    <TouchableOpacity
       style={[styles.categoryItem, { width: GRID_ITEM_WIDTH }]}
       onPress={onPress}
-      glowColor={color}
-      activeScale={0.93}
+      activeOpacity={0.7}
     >
       <View style={[styles.categoryIconWrap, { backgroundColor: color }]}>
         <Text style={styles.categoryEmoji}>{emoji}</Text>
       </View>
       <Text style={styles.categoryLabel} numberOfLines={1}>{label}</Text>
-    </PressableScale>
+    </TouchableOpacity>
   );
 }
 
-// âââ Section Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section Card ────────────────────────────────────────────────────────
 function SectionCard({ title, emoji, onPress, children, rightLabel }: {
   title: string; emoji: string; onPress?: () => void; children: React.ReactNode; rightLabel?: string;
 }) {
   return (
-    <PressableScale onPress={onPress} disabled={!onPress} activeScale={0.98} glowColor="#22C55E">
+    <TouchableOpacity activeOpacity={onPress ? 0.7 : 1} onPress={onPress} disabled={!onPress}>
       <Card style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
@@ -68,7 +63,7 @@ function SectionCard({ title, emoji, onPress, children, rightLabel }: {
         </View>
         {children}
       </Card>
-    </PressableScale>
+    </TouchableOpacity>
   );
 }
 
@@ -96,15 +91,6 @@ export default function HomeScreen() {
   const [groceryItems, setGroceryItems] = useState<string[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenancePreview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  // Load header image from household
-  useEffect(() => {
-    if (household?.header_image_url) {
-      setHeaderImageUrl(household.header_image_url);
-    }
-  }, [household?.header_image_url]);
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -112,92 +98,6 @@ export default function HomeScreen() {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
-
-
-  // ── Header Image Upload ─────────────────────────
-  const pickHeaderImage = useCallback(async () => {
-    if (!household?.id) return;
-
-    if (Platform.OS === 'web') {
-      // Web: use file input
-      const doc = typeof document !== 'undefined' ? document : null;
-      if (!doc) return;
-      const input = doc.createElement('input') as any;
-      input.type = 'file';
-      input.accept = 'image/jpeg,image/png,image/webp';
-      input.onchange = async (e: any) => {
-        const file = e.target?.files?.[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-          Alert.alert('Too Large', 'Please choose an image under 2MB.');
-          return;
-        }
-        await uploadHeaderImage(file);
-      };
-      input.click();
-    } else {
-      try {
-        const ImagePicker = require('expo-image-picker');
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permission needed', 'Please allow photo library access to set a header image.');
-          return;
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [16, 9],
-          quality: 0.5,
-        });
-        if (!result.canceled && result.assets[0]) {
-          const uri = result.assets[0].uri;
-          const resp = await fetch(uri);
-          const blob = await resp.blob();
-          await uploadHeaderImage(blob);
-        }
-      } catch (err) {
-        console.error('Image picker error:', err);
-      }
-    }
-  }, [household?.id]);
-
-  const uploadHeaderImage = useCallback(async (file: Blob | File) => {
-    if (!household?.id) return;
-    setUploadingImage(true);
-    try {
-      const ext = (file as any).type?.includes('png') ? 'png' : 'jpg';
-      const filePath = household.id + '/header.' + ext;
-      const { error: uploadError } = await supabase.storage
-        .from('header-images')
-        .upload(filePath, file, { upsert: true, contentType: (file as any).type || 'image/jpeg' });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage
-        .from('header-images')
-        .getPublicUrl(filePath);
-      const publicUrl = urlData.publicUrl + '?t=' + Date.now();
-      const { error: updateError } = await supabase
-        .from('households')
-        .update({ header_image_url: publicUrl })
-        .eq('id', household.id);
-      if (updateError) throw updateError;
-      setHeaderImageUrl(publicUrl);
-    } catch (err: any) {
-      console.error('Upload error:', err);
-      Alert.alert('Upload Failed', err.message || 'Could not upload image.');
-    } finally {
-      setUploadingImage(false);
-    }
-  }, [household?.id]);
-
-  const removeHeaderImage = useCallback(async () => {
-    if (!household?.id) return;
-    try {
-      await supabase.from('households').update({ header_image_url: null }).eq('id', household.id);
-      setHeaderImageUrl(null);
-    } catch (err) {
-      console.error('Remove header image error:', err);
-    }
-  }, [household?.id]);
 
   const loadDashboard = useCallback(async () => {
     if (!household?.id) return;
@@ -280,7 +180,7 @@ export default function HomeScreen() {
   const budgetRemaining = totalBudget - totalSpent;
   const budgetPct = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
   const budgetColor = budgetPct > 90 ? colors.error : budgetPct > 70 ? colors.warning : colors.green[500];
-  const categoryEmoji: Record<string, string> = { home: 'ð ', vehicle: 'ð', pet: 'ð¾', appliance: 'ð§' };
+  const categoryEmoji: Record<string, string> = { home: '🏠', vehicle: '🚗', pet: '🐾', appliance: '🔧' };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -289,81 +189,30 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Section with Optional Background Image */}
-        {headerImageUrl ? (
-          <ImageBackground
-            source={{ uri: headerImageUrl }}
-            style={styles.hero}
-            imageStyle={styles.heroImage}
-            resizeMode="cover"
-          >
-            <View style={styles.heroImageOverlay}>
-              <View style={styles.heroTopRow}>
-                <View style={styles.heroLeft}>
-                  <Text style={styles.heroGreeting}>{greeting()},</Text>
-                  <Text style={styles.heroName}>{member?.display_name || 'Friend'}</Text>
-                </View>
-                <TouchableOpacity style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>
-                    {(member?.display_name || 'U')[0].toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
+        {/* ── Hero Section ────────────────────── */}
+        <View style={styles.hero}>
+          <View style={styles.heroOverlay}>
+            <View style={styles.heroTopRow}>
+              <View style={styles.heroLeft}>
+                <Text style={styles.heroGreeting}>{greeting()},</Text>
+                <Text style={styles.heroName}>{member?.display_name || 'Friend'}</Text>
               </View>
-              {household && (
-                <View style={styles.heroBottomRow}>
-                  <View style={styles.householdPill}>
-                    <Text style={styles.householdIcon}>{String.fromCodePoint(0x1F3E1)}</Text>
-                    <Text style={styles.householdName}>{household.name}</Text>
-                  </View>
-                  <View style={styles.headerImageActions}>
-                    <TouchableOpacity style={styles.cameraBtn} onPress={pickHeaderImage}>
-                      {uploadingImage ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <Text style={styles.cameraBtnIcon}>{String.fromCodePoint(0x1F4F7)}</Text>
-                      )}
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.cameraBtn} onPress={removeHeaderImage}>
-                      <Text style={styles.cameraBtnText}>{String.fromCodePoint(0x2715)}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
+              <TouchableOpacity style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>
+                  {(member?.display_name || 'U')[0].toUpperCase()}
+                </Text>
+              </TouchableOpacity>
             </View>
-          </ImageBackground>
-        ) : (
-          <View style={styles.hero}>
-            <View style={styles.heroOverlay}>
-              <View style={styles.heroTopRow}>
-                <View style={styles.heroLeft}>
-                  <Text style={styles.heroGreeting}>{greeting()},</Text>
-                  <Text style={styles.heroName}>{member?.display_name || 'Friend'}</Text>
-                </View>
-                <TouchableOpacity style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>
-                    {(member?.display_name || 'U')[0].toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
+            {household && (
+              <View style={styles.householdPill}>
+                <Text style={styles.householdIcon}>🏡</Text>
+                <Text style={styles.householdName}>{household.name}</Text>
               </View>
-              {household && (
-                <View style={styles.heroBottomRow}>
-                  <View style={styles.householdPill}>
-                    <Text style={styles.householdIcon}>{String.fromCodePoint(0x1F3E1)}</Text>
-                    <Text style={styles.householdName}>{household.name}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.cameraBtn} onPress={pickHeaderImage}>
-                    {uploadingImage ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <Text style={styles.cameraBtnIcon}>{String.fromCodePoint(0x1F4F7)}</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
+            )}
           </View>
-        )}
-        {/* ââ Trial Banner ââââââââââââââââââââââ */}
+        </View>
+
+        {/* ── Trial Banner ────────────────────── */}
         {isTrialActive && !isSubscribed && (
           <TouchableOpacity
             style={styles.trialBanner}
@@ -372,49 +221,47 @@ export default function HomeScreen() {
           >
             <Text style={styles.trialText}>
               {trialDaysRemaining <= 3
-                ? 'â ï¸ Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' â Upgrade now'
-                : 'â¨ Free trial: ' + trialDaysRemaining + ' days remaining'}
+                ? '⚠️ Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' — Upgrade now'
+                : '✨ Free trial: ' + trialDaysRemaining + ' days remaining'}
             </Text>
           </TouchableOpacity>
         )}
 
-        {/* ââ Search + Ask Bar ââââââââââââââââââ */}
+        {/* ── Search + Ask Bar ────────────────── */}
         <View style={styles.searchRow}>
-          <PressableScale
+          <TouchableOpacity
             style={styles.searchBar}
             onPress={() => router.push('/voice-assistant')}
-            activeScale={0.98}
-            glowColor="#9CA3AF"
+            activeOpacity={0.7}
           >
-            <Text style={styles.searchIcon}>ð</Text>
+            <Text style={styles.searchIcon}>🔍</Text>
             <Text style={styles.searchPlaceholder}>Search HomeBase...</Text>
-          </PressableScale>
-          <PressableScale
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.askButton}
             onPress={() => router.push('/voice-assistant')}
-            activeScale={0.93}
-            glowColor="#22C55E"
+            activeOpacity={0.7}
           >
-            <Text style={styles.askIcon}>ð£ï¸</Text>
+            <Text style={styles.askIcon}>🗣️</Text>
             <Text style={styles.askLabel}>Ask</Text>
-          </PressableScale>
+          </TouchableOpacity>
         </View>
 
-        {/* ââ Category Grid (2 rows Ã 3 cols) ââââââ */}
+        {/* ── Category Grid (2 rows × 3 cols) ────── */}
         <View style={styles.categoryGrid}>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="ð" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
-            <CategoryIcon emoji="ð°" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
-            <CategoryIcon emoji="ð" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
+            <CategoryIcon emoji="📅" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
+            <CategoryIcon emoji="💰" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
+            <CategoryIcon emoji="🛒" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
           </View>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="ð³" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
-            <CategoryIcon emoji="ð§" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
-            <CategoryIcon emoji="ð¸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
+            <CategoryIcon emoji="🍳" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
+            <CategoryIcon emoji="🔧" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
+            <CategoryIcon emoji="📸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
           </View>
         </View>
 
-        {/* ââ Dashboard Cards âââââââââââââââââââââ */}
+        {/* ── Dashboard Cards ───────────────────── */}
         {isLoading ? (
           <ActivityIndicator color={colors.green[500]} style={{ marginTop: 24 }} />
         ) : (
@@ -422,7 +269,7 @@ export default function HomeScreen() {
             {/* Today's Schedule */}
             <SectionCard
               title="Today's Schedule"
-              emoji="ð"
+              emoji="📅"
               onPress={() => router.push('/(tabs)/calendar')}
             >
               {todayEvents.length > 0 ? (
@@ -436,7 +283,7 @@ export default function HomeScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.eventName}>{event.title}</Text>
                       {event.location && (
-                        <Text style={styles.eventLoc}>ð {event.location}</Text>
+                        <Text style={styles.eventLoc}>📍 {event.location}</Text>
                       )}
                     </View>
                   </View>
@@ -452,7 +299,7 @@ export default function HomeScreen() {
             {/* Budget Snapshot */}
             <SectionCard
               title="This Month"
-              emoji="ð°"
+              emoji="💰"
               onPress={() => router.push('/(tabs)/expenses')}
             >
               <View style={styles.budgetRow}>
@@ -485,7 +332,7 @@ export default function HomeScreen() {
             {/* Grocery List */}
             <SectionCard
               title="Grocery List"
-              emoji="ð"
+              emoji="🛒"
               onPress={() => router.push('/(tabs)/lists')}
               rightLabel={groceryCount > 0 ? groceryCount + ' items' : undefined}
             >
@@ -512,7 +359,7 @@ export default function HomeScreen() {
             {/* Upcoming Maintenance */}
             <SectionCard
               title="Maintenance"
-              emoji="ð§"
+              emoji="🔧"
               onPress={() => router.push('/maintenance')}
             >
               {maintenance.length > 0 ? (
@@ -529,7 +376,7 @@ export default function HomeScreen() {
                           </Text>
                         )}
                       </View>
-                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || 'ð§'}</Text>
+                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || '🔧'}</Text>
                     </View>
                   );
                 })
@@ -542,27 +389,27 @@ export default function HomeScreen() {
             </SectionCard>
 
             {/* Quick Tips */}
-            <SectionCard title="Quick Tips" emoji="ð¡">
+            <SectionCard title="Quick Tips" emoji="💡">
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>ð</Text>
+                  <Text style={styles.tipIcon}>📖</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Guides</Text>
                   <Text style={styles.tipDesc}>Tips for managing your home</Text>
                 </View>
-                <Text style={styles.tipArrow}>âº</Text>
+                <Text style={styles.tipArrow}>›</Text>
               </View>
               <View style={styles.tipDivider} />
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>â­</Text>
+                  <Text style={styles.tipIcon}>⭐</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Favorites</Text>
                   <Text style={styles.tipDesc}>Quick access to your most used items</Text>
                 </View>
-                <Text style={styles.tipArrow}>âº</Text>
+                <Text style={styles.tipArrow}>›</Text>
               </View>
             </SectionCard>
           </>
@@ -579,12 +426,10 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
 
-  // ââ Hero ââââââââââââââââââââââââââââââââââââââââââ
+  // ── Hero ──────────────────────────────────────────
   hero: {
     backgroundColor: colors.green[600],
     paddingTop: 8,
-    minHeight: 140,
-    overflow: 'hidden' as const,
     paddingBottom: 24,
     paddingHorizontal: GRID_PADDING,
     borderBottomLeftRadius: borderRadius['2xl'],
@@ -608,9 +453,6 @@ const styles = StyleSheet.create({
   heroName: {
     ...typography.h1,
     color: colors.white,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   avatarCircle: {
     width: 48,
@@ -636,48 +478,8 @@ const styles = StyleSheet.create({
   },
   householdIcon: { fontSize: 14 },
   householdName: { ...typography.caption, color: colors.white, fontWeight: '600' },
-  // Header Image
-  heroImage: {
-    borderBottomLeftRadius: borderRadius['2xl'],
-    borderBottomRightRadius: borderRadius['2xl'],
-  },
-  heroImageOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.40)',
-    paddingTop: 8,
-    paddingBottom: 24,
-    paddingHorizontal: GRID_PADDING,
-  },
-  heroBottomRow: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-  },
-  headerImageActions: {
-    flexDirection: 'row' as const,
-    gap: 8,
-  },
-  cameraBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.30)',
-  },
-  cameraBtnIcon: {
-    fontSize: 16,
-  },
-  cameraBtnText: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: '700' as const,
-  },
 
-
-  // ââ Trial Banner ââââââââââââââââââââââââââââââââââââ
+  // ── Trial Banner ────────────────────────────────────
   trialBanner: {
     backgroundColor: 'rgba(59,130,246,0.08)',
     paddingVertical: 10,
@@ -691,7 +493,7 @@ const styles = StyleSheet.create({
   },
   trialText: { ...typography.caption, color: colors.blue[700], fontWeight: '600', textAlign: 'center' as const },
 
-  // ââ Search + Ask Bar ââââââââââââââââââââââââââââââââ
+  // ── Search + Ask Bar ────────────────────────────────
   searchRow: {
     flexDirection: 'row',
     gap: 10,
@@ -726,7 +528,7 @@ const styles = StyleSheet.create({
   askIcon: { fontSize: 16 },
   askLabel: { ...typography.bodyBold, color: colors.white },
 
-  // ââ Category Grid âââââââââââââââââââââââââââââââââââ
+  // ── Category Grid ───────────────────────────────────
   categoryGrid: {
     paddingHorizontal: GRID_PADDING,
     marginBottom: 20,
@@ -753,7 +555,7 @@ const styles = StyleSheet.create({
   categoryEmoji: { fontSize: 26 },
   categoryLabel: { ...typography.small, color: colors.gray[600], fontWeight: '600' },
 
-  // ââ Section Cards ââââââââââââââââââââââââââââââââââ
+  // ── Section Cards ──────────────────────────────────
   sectionCard: {
     marginHorizontal: GRID_PADDING,
     marginBottom: 14,
@@ -774,7 +576,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.bodyBold, color: colors.gray[900] },
   sectionAction: { ...typography.caption, color: colors.green[600], fontWeight: '600' },
 
-  // ââ Events âââââââââââââââââââââââââââââââââââââââââ
+  // ── Events ─────────────────────────────────────────
   eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -793,7 +595,7 @@ const styles = StyleSheet.create({
   eventName: { ...typography.body, color: colors.gray[900] },
   eventLoc: { ...typography.small, color: colors.gray[400], marginTop: 2 },
 
-  // ââ Budget âââââââââââââââââââââââââââââââââââââââââ
+  // ── Budget ─────────────────────────────────────────
   budgetRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -821,7 +623,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 
-  // ââ Grocery ââââââââââââââââââââââââââââââââââââââââ
+  // ── Grocery ────────────────────────────────────────
   groceryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -840,7 +642,7 @@ const styles = StyleSheet.create({
   groceryName: { ...typography.body, color: colors.gray[700] },
   groceryMore: { ...typography.small, color: colors.gray[400], marginTop: 8, textAlign: 'center' as const },
 
-  // ââ Maintenance ââââââââââââââââââââââââââââââââââââ
+  // ── Maintenance ────────────────────────────────────
   maintRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -859,12 +661,12 @@ const styles = StyleSheet.create({
   maintDue: { ...typography.small, color: colors.gray[400], marginTop: 2 },
   maintCatEmoji: { fontSize: 18 },
 
-  // ââ Empty State ââââââââââââââââââââââââââââââââââââ
+  // ── Empty State ────────────────────────────────────
   emptyState: { alignItems: 'center', paddingVertical: 16 },
   emptyText: { ...typography.body, color: colors.gray[400] },
   emptyHint: { ...typography.small, color: colors.gray[300], marginTop: 4 },
 
-  // ââ Tips âââââââââââââââââââââââââââââââââââââââââââ
+  // ── Tips ───────────────────────────────────────────
   tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
