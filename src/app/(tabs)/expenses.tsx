@@ -1,25 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { colors, typography, spacing, shadows, borderRadius } from '../../constants/theme';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const GRID_GAP = 10;
-const GRID_PADDING = spacing.lg;
-const CAT_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * 3) / 4;
+import { colors, typography, spacing, shadows } from '../../constants/theme';
 
 const CATEGORIES = [
-  { emoji: '🏠', name: 'House', color: colors.blue[50] },
-  { emoji: '🎬', name: 'Fun', color: colors.teal[50] },
-  { emoji: '👶', name: 'Kids', color: colors.green[50] },
-  { emoji: '🛒', name: 'Groceries', color: '#F0FDF4' },
-  { emoji: '🚗', name: 'Vehicle', color: colors.gray[50] },
-  { emoji: '🏥', name: 'Health', color: '#FEF2F2' },
-  { emoji: '📱', name: 'Subs', color: colors.blue[50] },
-  { emoji: '➕', name: 'Add', color: colors.gray[50] },
+  { emoji: '🏠', name: 'House', color: colors.blue[500] },
+  { emoji: '🎬', name: 'Entertainment', color: colors.teal[500] },
+  { emoji: '👶', name: 'Kids', color: colors.green[500] },
+  { emoji: '🛒', name: 'Groceries', color: colors.green[600] },
+  { emoji: '🚗', name: 'Vehicle', color: colors.gray[600] },
+  { emoji: '🏥', name: 'Health', color: colors.error },
+  { emoji: '📱', name: 'Subscriptions', color: colors.blue[700] },
+  { emoji: '➕', name: 'Add New', color: colors.gray[300] },
 ];
 
 export default function ExpensesScreen() {
@@ -28,51 +23,149 @@ export default function ExpensesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Colored Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Expenses</Text>
-          <View style={styles.periodRow}>
-            {(['week', 'month', 'year'] as const).map((p) => (
-              <TouchableOpacity key={p} style={[styles.periodBtn, selectedPeriod === p && styles.periodBtnActive]} onPress={() => setSelectedPeriod(p)}>
-                <Text style={[styles.periodText, selectedPeriod === p && styles.periodTextActive]}>{p.charAt(0).toUpperCase() + p.slice(1)}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.totalSection}>
-            <Text style={styles.totalLabel}>Total Spent This {selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1)}</Text>
-            <Text style={styles.totalAmount}>$0.00</Text>
-            <View style={styles.budgetBar}><View style={[styles.budgetFill, { width: '0%' }]} /></View>
-            <Text style={styles.budgetNote}>No budget set — tap to create one</Text>
-          </View>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Expenses</Text>
+
+        {/* Period selector */}
+        <View style={styles.periodRow}>
+          {(['week', 'month', 'year'] as const).map((period) => (
+            <TouchableOpacity
+              key={period}
+              style={[styles.periodBtn, selectedPeriod === period && styles.periodBtnActive]}
+              onPress={() => setSelectedPeriod(period)}
+            >
+              <Text
+                style={[styles.periodText, selectedPeriod === period && styles.periodTextActive]}
+              >
+                {period.charAt(0).toUpperCase() + period.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Category Grid */}
-        <View style={styles.sectionWrap}>
-          <Text style={styles.sectionTitle}>📊 Categories</Text>
-          <View style={styles.categoryGrid}>
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity key={cat.name} style={[styles.categoryCard, { width: CAT_WIDTH }]}>
-                <View style={[styles.catIconWrap, { backgroundColor: cat.color }]}>
-                  <Text style={styles.catEmoji}>{cat.emoji}</Text>
-                </View>
-                <Text style={styles.catName}>{cat.name}</Text>
-                <Text style={styles.catAmount}>$0</Text>
-              </TouchableOpacity>
-            ))}
+        {/* Total card */}
+        <Card variant="elevated" style={styles.totalCard}>
+          <Text style={styles.totalLabel}>Total Spent This {selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1)}</Text>
+          <Text style={styles.totalAmount}>$0.00</Text>
+          <View style={styles.budgetBar}>
+            <View style={[styles.budgetFill, { width: '0%' }]} />
           </View>
+          <Text style={styles.budgetNote}>No budget set — tap to create one</Text>
+        </Card>
+
+        {/* Categories */}
+        <Text style={styles.sectionTitle}>Categories</Text>
+        <View style={styles.categoryGrid}>
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity key={cat.name} style={styles.categoryCard}>
+              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+              <Text style={styles.categoryName}>{cat.name}</Text>
+              <Text style={styles.categoryAmount}>$0</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Quick Actions */}
-        <View style={styles.sectionWrap}>
-          <Text style={styles.sectionTitle}>➕ Add Expense</Text>
-          <View style={styles.addRow}>
-            <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/receipt-scanner')}>
-              <View style={[styles.actionIcon, { backgroundColor: '#FDF2F8' }]}><Text style={styles.actionEmoji}>📸</Text></View>
-              <Text style={styles.actionLabel}>Scan Receipt</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/add-expense')}>
-              <View style={[styles.actionIcon, { backgroundColor: colors.blue[50] }]}><Text style={styles.actionEmoji}>✏️</Text></View>
-              <Text style={styles.actionLabel}>Manual Entry</Text>
-            </TouchableOpacity>
-            <TouchableOpac
+        {/* Quick add buttons */}
+        <Text style={styles.sectionTitle}>Add Expense</Text>
+        <View style={styles.addRow}>
+          <Button title="📸 Scan Receipt" onPress={() => router.push('/receipt-scanner')} variant="outline" size="md" style={styles.addBtn} />
+          <Button title="✏️ Manual Entry" onPress={() => router.push('/add-expense')} variant="outline" size="md" style={styles.addBtn} />
+        </View>
+        <Button title="📄 Upload Bank Statement" onPress={() => router.push('/bank-statement')} variant="ghost" size="sm" />
+
+        {/* Recent transactions */}
+        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Recent Transactions</Text>
+        <Card variant="outlined">
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyEmoji}>💰</Text>
+            <Text style={styles.emptyText}>No expenses recorded yet</Text>
+            <Text style={styles.emptySubtext}>Scan a receipt or add one manually</Text>
+          </View>
+        </Card>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg },
+  title: { ...typography.h1, color: colors.gray[900], marginBottom: 16 },
+
+  periodRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.04)',
+    borderRadius: 16,
+    padding: 3,
+    marginBottom: 20,
+  },
+  periodBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  periodBtnActive: {
+    backgroundColor: colors.glass.elevated,
+    ...shadows.glass,
+  },
+  periodText: { ...typography.caption, fontWeight: '600', color: colors.gray[500] },
+  periodTextActive: { color: colors.green[600] },
+
+  totalCard: {
+    alignItems: 'center' as const,
+    paddingVertical: 32,
+    marginBottom: 24,
+  },
+  totalLabel: { ...typography.caption, color: colors.gray[500], marginBottom: 4 },
+  totalAmount: { fontSize: 36, fontWeight: '800', color: colors.gray[900] },
+  budgetBar: {
+    width: '80%',
+    height: 6,
+    backgroundColor: colors.gray[200],
+    borderRadius: 3,
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  budgetFill: {
+    height: '100%',
+    backgroundColor: colors.green[500],
+    borderRadius: 3,
+  },
+  budgetNote: { ...typography.small, color: colors.gray[400], marginTop: 8 },
+
+  sectionTitle: { ...typography.bodyBold, color: colors.gray[700], marginBottom: 12 },
+
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 24,
+  },
+  categoryCard: {
+    width: '22.5%',
+    backgroundColor: colors.glass.elevated,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+    minHeight: 86,
+    justifyContent: 'center',
+  },
+  categoryEmoji: { fontSize: 26, marginBottom: 6 },
+  categoryName: { ...typography.small, color: colors.gray[600], fontWeight: '600', textAlign: 'center' },
+  categoryAmount: { ...typography.caption, color: colors.gray[400], marginTop: 4 },
+
+  addRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  addBtn: { flex: 1 },
+
+  emptyState: { alignItems: 'center', paddingVertical: 20 },
+  emptyEmoji: { fontSize: 32, marginBottom: 8 },
+  emptyText: { ...typography.body, color: colors.gray[400] },
+  emptySubtext: { ...typography.caption, color: colors.gray[300], marginTop: 4 },
+});
