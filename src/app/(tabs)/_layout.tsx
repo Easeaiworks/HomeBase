@@ -5,15 +5,16 @@ import { colors, shadows, borderRadius } from '../../constants/theme';
 
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const icons: Record<string, string> = {
-    home: 'ð ',
-    calendar: 'ð',
-    lists: 'ð',
-    more: 'âï¸',
+    home: '🏠',
+    calendar: '📅',
+    expenses: '💰',
+    lists: '🛒',
+    more: '⚙️',
   };
 
   return (
     <View style={[styles.tabIcon, focused && styles.tabIconActive]}>
-      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || 'ð±'}</Text>
+      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || '📱'}</Text>
     </View>
   );
 }
@@ -49,19 +50,8 @@ export default function TabLayout() {
         <Tabs.Screen
           name="expenses"
           options={{
-            title: 'Ask',
-            tabBarButton: () => (
-              <TouchableOpacity
-                style={styles.voiceCenterBtn}
-                activeOpacity={0.8}
-                onPress={() => router.push('/voice-assistant')}
-              >
-                <View style={styles.voiceCenterInner}>
-                  <Text style={styles.voiceCenterEmoji}>ðï¸</Text>
-                </View>
-                <Text style={styles.voiceCenterLabel}>Ask</Text>
-              </TouchableOpacity>
-            ),
+            title: 'Expenses',
+            tabBarIcon: ({ focused }) => <TabIcon name="expenses" focused={focused} />,
           }}
         />
         <Tabs.Screen
@@ -79,6 +69,15 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+
+      {/* Floating Voice Button — glass effect with green glow */}
+      <TouchableOpacity
+        style={styles.voiceButton}
+        activeOpacity={0.8}
+        onPress={() => router.push('/voice-assistant')}
+      >
+        <Text style={styles.voiceEmoji}>🎙️</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -123,36 +122,24 @@ const styles = StyleSheet.create({
   emojiActive: {
     fontSize: 22,
   },
-  voiceCenterBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 2,
-  },
-  voiceCenterInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  voiceButton: {
+    position: 'absolute',
+    bottom: 52,
+    alignSelf: 'center',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: colors.green[500],
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -24,
-    shadowColor: colors.green[500],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 16,
-    elevation: 10,
+    ...shadows.lg,
+    shadowColor: colors.green[600],
+    shadowOpacity: 0.35,
     borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.50)',
+    borderColor: 'rgba(255,255,255,0.40)',
+    zIndex: 10,
   },
-  voiceCenterEmoji: {
-    fontSize: 24,
-  },
-  voiceCenterLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.green[600],
-    marginTop: 2,
-    letterSpacing: 0.1,
+  voiceEmoji: {
+    fontSize: 28,
   },
 });
