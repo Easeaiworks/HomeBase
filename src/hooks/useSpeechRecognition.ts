@@ -21,6 +21,7 @@ interface UseSpeechRecognitionReturn {
   resetTranscript: () => void;
 }
 
+// Web Speech API types (not in default TS lib)
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList;
   resultIndex: number;
@@ -120,4 +121,114 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
           silenceTimerRef.current = setTimeout(() => {
             const hasContent = finalTranscript.trim() || lastInterimTranscript.trim();
             if (recognitionRef.current && hasContent) {
-              try { recognitionRef.current.stop(); } catch (_e) { /*
+              try { recognitionRef.current.stop(); } catch (_e) { /* ignore */ }
+            }
+          }, SILENCE_TIMEOUT);
+        };
+
+        recognition.onstart = () => {
+          setIsListening(true);
+          setError(null);
+        };
+
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript + ' ';
+              setTranscript(finalTranscript.trim());
+            } else {
+              interim += result[0].transcript;
+            }
+          }
+          if (interim) {
+            lastInterimTranscript = interim;
+          }
+          setInterimTranscript(interim);
+          resetSilenceTimer();
+        };
+
+        recognition.onerror = (event: { error: string; message?: string }) => {
+          if (event.error === 'not-allowed') {
+            setError('Microphone access denied. Please allow microphone access in your browser settings and try again.');
+          } else if (event.error === 'no-speech') {
+            if (!safari) {
+              setError('No speech detected. Try again and speak clearly.');
+            }
+          } else if (event.error === 'network') {
+            setError('Network error. Speech recognition requires an internet connection.');
+          } else if (event.error === 'aborted') {
+            // User aborted, not an error
+          } else {
+            setError('Speech recognition error: ' + event.error);
+          }
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+
+          // Safari fallback: if no isFinal results but we have interim, use interim
+          if (!finalTranscript.trim() && lastInterimTranscript.trim()) {
+            finalTranscript = lastInterimTranscript;
+          }
+
+          // Set transcript BEFORE isListening=false so the auto-submit effect sees it
+          if (finalTranscript.trim()) {
+            setTranscript(finalTranscript.trim());
+          }
+          setInterimTranscript('');
+
+          // Small delay so React processes transcript state before isListening changes
+          setTimeout(() => {
+            setIsListening(false);
+          }, 50);
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (err: any) {
+        setError(err.message || 'Failed to start speech recognition.');
+        setIsListening(false);
+      }
+    } else {
+      setError('Voice input is available on the web version. On mobile, type your message or use the quick actions.');
+    }
+  }, []);
+
+  const stopListening = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (_e) { /* ignore */ }
+    }
+    // Let onend handle setting isListening=false to ensure transcript is finalized first
+  }, []);
+
+  const resetTranscript = useCallback(() => {
+    setTranscript('');
+    setInterimTranscript('');
+    setError(null);
+  }, []);
+
+  return {
+    isListening,
+    transcript,
+    interimTranscript,
+    isSupported,
+    error,
+    startListening,
+    stopListening,
+    resetTranscript,
+  };
+}
