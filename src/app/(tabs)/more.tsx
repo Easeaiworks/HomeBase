@@ -27,7 +27,7 @@ function MenuItem({ emoji, title, subtitle, onPress }: {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { household, member, isSuperAdmin, signOut } = useAuthStore();
+  const { household, member, isSuperAdmin, isTrialActive, trialDaysRemaining, isSubscribed, signOut } = useAuthStore();
   const isParent = member?.role === 'parent';
 
   const handleSignOut = () => {
@@ -96,6 +96,17 @@ export default function MoreScreen() {
             </Card>
           </>
         )}
+
+        {/* Subscription */}
+        <Text style={styles.sectionTitle}>Subscription</Text>
+        <Card variant="outlined" style={styles.menuCard}>
+          <MenuItem
+            emoji={isSubscribed ? '✅' : isTrialActive ? '⏳' : '💳'}
+            title={isSubscribed ? 'Manage Subscription' : isTrialActive ? `Trial: ${trialDaysRemaining} days left` : 'Upgrade Plan'}
+            subtitle={isSubscribed ? 'View plan, billing, and invoices' : 'Choose a plan to keep using HomeBase'}
+            onPress={() => router.push('/subscription')}
+          />
+        </Card>
 
         <Text style={styles.sectionTitle}>Settings</Text>
         <Card variant="outlined" style={styles.menuCard}>

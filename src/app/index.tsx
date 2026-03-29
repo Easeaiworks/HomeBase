@@ -5,7 +5,10 @@ import { colors, typography, spacing } from '../constants/theme';
 import { Button } from '../components/ui/Button';
 
 export default function Index() {
-  const { session, isLoading, isOnboarded, isApproved, isPendingApproval, member, signOut } = useAuthStore();
+  const {
+    session, isLoading, isOnboarded, isApproved, isPendingApproval,
+    member, isSuperAdmin, isTrialExpired, isSubscribed, isTrialActive, signOut,
+  } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -61,6 +64,12 @@ export default function Index() {
   // Check if password change is required
   if (member?.require_password_change) {
     return <Redirect href="/change-password" />;
+  }
+
+  // Check subscription / trial status
+  // Super admin (you) bypasses paywall entirely
+  if (isTrialExpired && !isSubscribed && !isSuperAdmin) {
+    return <Redirect href="/subscription" />;
   }
 
   return <Redirect href="/(tabs)/home" />;

@@ -62,7 +62,7 @@ interface MaintenancePreview {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { member, household } = useAuthStore();
+  const { member, household, isTrialActive, trialDaysRemaining, isSubscribed } = useAuthStore();
   const [todayEvents, setTodayEvents] = useState<TodayEvent[]>([]);
   const [totalSpent, setTotalSpent] = useState(0);
   const [totalBudget, setTotalBudget] = useState(0);
@@ -202,6 +202,21 @@ export default function HomeScreen() {
           <View style={styles.householdBadge}>
             <Text style={styles.householdText}>🏡 {household.name}</Text>
           </View>
+        )}
+
+        {/* Trial Banner */}
+        {isTrialActive && !isSubscribed && (
+          <TouchableOpacity
+            style={styles.trialBanner}
+            onPress={() => router.push('/subscription')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.trialBannerText}>
+              {trialDaysRemaining <= 3
+                ? `⚠️ Trial ends in ${trialDaysRemaining} day${trialDaysRemaining !== 1 ? 's' : ''} — Upgrade now`
+                : `✨ Free trial: ${trialDaysRemaining} days remaining`}
+            </Text>
+          </TouchableOpacity>
         )}
 
         {/* Quick Actions */}
@@ -357,6 +372,17 @@ const styles = StyleSheet.create({
     borderRadius: 20, marginBottom: 24,
   },
   householdText: { ...typography.caption, color: colors.green[700], fontWeight: '600' },
+
+  trialBanner: {
+    backgroundColor: colors.blue[50],
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.blue[200],
+    marginBottom: 20,
+  },
+  trialBannerText: { ...typography.caption, color: colors.blue[700], fontWeight: '600', textAlign: 'center' as const },
 
   sectionTitle: { ...typography.bodyBold, color: colors.gray[700], marginBottom: 12 },
 

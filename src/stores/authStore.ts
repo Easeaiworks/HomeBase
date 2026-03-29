@@ -22,6 +22,10 @@ interface Household {
   id: string;
   name: string;
   invite_code: string;
+  subscription_status: 'trial' | 'free' | 'active' | 'past_due' | 'canceled' | 'expired';
+  trial_expires_at: string | null;
+  subscription_current_period_end: string | null;
+  stripe_customer_id: string | null;
 }
 
 interface AuthState {
@@ -34,6 +38,10 @@ interface AuthState {
   isApproved: boolean;
   isPendingApproval: boolean;
   isSuperAdmin: boolean;
+  isTrialActive: boolean;
+  isTrialExpired: boolean;
+  isSubscribed: boolean;
+  trialDaysRemaining: number;
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -43,6 +51,12 @@ interface AuthState {
   signOut: () => Promise<void>;
   createHousehold: (name: string) => Promise<{ error: Error | null }>;
   joinHousehold: (inviteCode: string, displayName: string, role: 'parent' | 'teen' | 'child') => Promise<{ error: Error | null }>;
+}
+
+function calcTrialDays(expiresAt: string | null): number {
+  if (!expiresAt) return 0;
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -55,6 +69,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isApproved: false,
   isPendingApproval: false,
   isSuperAdmin: false,
+  isTrialActive: false,
+  isTrialExpired: false,
+  isSubscribed: false,
+  trialDaysRemaining: 0,
 
   setSession: (session) => {
     set({ session, user: session?.user ?? null });
@@ -64,6 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         member: null, household: null, isOnboarded: false, isLoading: false,
         isApproved: false, isPendingApproval: false, isSuperAdmin: false,
+        isTrialActive: false, isTrialExpired: false, isSubscribed: false, trialDaysRemaining: 0,
       });
     }
   },
@@ -80,8 +99,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .single() as { data: any };
 
       if (memberData) {
-        const household = memberData.households;
+        const h = memberData.households;
         const approvalStatus = memberData.approval_status || 'approved';
+
+        // Calculate subscription/trial state
+        const subStatus = h?.subscription_status || 'trial';
+        const trialExpiresAt = h?.trial_expires_at || null;
+        const trialDays = calcTrialDays(trialExpiresAt);
+        const isTrialActive = subStatus === 'trial' && trialDays > 0;
+        const isTrialExpired = subStatus === 'trial' && trialDays <= 0;
+        const isSubscribed = subStatus === 'active';
 
         set({
           member: {
@@ -98,19 +125,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             require_password_change: memberData.require_password_change || false,
             two_factor_enabled: memberData.two_factor_enabled || false,
           },
-          household: household
-            ? { id: household.id, name: household.name, invite_code: household.invite_code }
+          household: h
+            ? {
+                id: h.id,
+                name: h.name,
+                invite_code: h.invite_code,
+                subscription_status: subStatus,
+                trial_expires_at: trialExpiresAt,
+                subscription_current_period_end: h.subscription_current_period_end || null,
+                stripe_customer_id: h.stripe_customer_id || null,
+              }
             : null,
           isOnboarded: true,
           isApproved: approvalStatus === 'approved',
           isPendingApproval: approvalStatus === 'pending',
           isSuperAdmin: memberData.is_super_admin || false,
+          isTrialActive,
+          isTrialExpired,
+          isSubscribed,
+          trialDaysRemaining: trialDays,
           isLoading: false,
         });
       } else {
         set({
           member: null, household: null, isOnboarded: false, isLoading: false,
           isApproved: false, isPendingApproval: false, isSuperAdmin: false,
+          isTrialActive: false, isTrialExpired: false, isSubscribed: false, trialDaysRemaining: 0,
         });
       }
     } catch {
@@ -137,6 +177,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       session: null, user: null, member: null, household: null,
       isOnboarded: false, isApproved: false, isPendingApproval: false, isSuperAdmin: false,
+      isTrialActive: false, isTrialExpired: false, isSubscribed: false, trialDaysRemaining: 0,
     });
   },
 
