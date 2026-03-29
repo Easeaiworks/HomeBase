@@ -1,6 +1,11 @@
 /**
  * Cross-platform Speech Recognition Hook
  * Uses Web Speech API on browsers, placeholder for native (expo-speech / @react-native-voice)
+ *
+ * Safari compatibility:
+ *  - Falls back to interim transcript if no isFinal results emitted before onend
+ *  - Uses shorter silence timer (1.5s) for faster auto-submit
+ *  - Handles Safari's aggressive onend behavior
  */
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Platform } from 'react-native';
@@ -16,7 +21,6 @@ interface UseSpeechRecognitionReturn {
   resetTranscript: () => void;
 }
 
-// Web Speech API types (not in default TS lib)
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList;
   resultIndex: number;
@@ -59,6 +63,12 @@ function getWebSpeechRecognition(): (new () => SpeechRecognitionInstance) | null
   return win.SpeechRecognition || win.webkitSpeechRecognition || null;
 }
 
+function isSafari(): boolean {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua);
+}
+
 export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -68,15 +78,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSupported = Platform.OS === 'web' && getWebSpeechRecognition() !== null;
 
-  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch (_e) {
-          // ignore
-        }
+        try { recognitionRef.current.abort(); } catch (_e) { /* ignore */ }
       }
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
@@ -95,119 +100,24 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
       }
 
       try {
-        // Stop any existing instance
         if (recognitionRef.current) {
           try { recognitionRef.current.abort(); } catch (_e) { /* ignore */ }
         }
 
         const recognition = new SpeechRecognitionClass();
-        recognition.continuous = true;
+        const safari = isSafari();
+
+        recognition.continuous = !safari;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
         let finalTranscript = '';
+        let lastInterimTranscript = '';
+        const SILENCE_TIMEOUT = safari ? 1500 : 2000;
 
-        // Reset silence timer — auto-stops recognition after 2s of no new speech
         const resetSilenceTimer = () => {
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = setTimeout(() => {
-            // No speech for 2 seconds after getting results — auto-stop
-            if (recognitionRef.current && finalTranscript.trim()) {
-              try {
-                recognitionRef.current.stop();
-              } catch (_e) { /* ignore */ }
-            }
-          }, 2000);
-        };
-
-        recognition.onstart = () => {
-          setIsListening(true);
-          setError(null);
-        };
-
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-          let interim = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const result = event.results[i];
-            if (result.isFinal) {
-              finalTranscript += result[0].transcript + ' ';
-              setTranscript(finalTranscript.trim());
-            } else {
-              interim += result[0].transcript;
-            }
-          }
-          setInterimTranscript(interim);
-          // Reset the silence timer on every speech result
-          resetSilenceTimer();
-        };
-
-        recognition.onerror = (event: { error: string; message?: string }) => {
-          if (event.error === 'not-allowed') {
-            setError('Microphone access denied. Please allow microphone access in your browser settings and try again.');
-          } else if (event.error === 'no-speech') {
-            setError('No speech detected. Try again and speak clearly.');
-          } else if (event.error === 'network') {
-            setError('Network error. Speech recognition requires an internet connection.');
-          } else if (event.error === 'aborted') {
-            // User aborted, not an error
-          } else {
-            setError(`Speech recognition error: ${event.error}`);
-          }
-          setIsListening(false);
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-          // Finalize any remaining transcript
-          if (finalTranscript.trim()) {
-            setTranscript(finalTranscript.trim());
-          }
-          setInterimTranscript('');
-        };
-
-        recognitionRef.current = recognition;
-        recognition.start();
-      } catch (err: any) {
-        setError(err.message || 'Failed to start speech recognition.');
-        setIsListening(false);
-      }
-    } else {
-      // Native: would use @react-native-voice/voice or expo-speech
-      // For now, show a message
-      setError('Voice input is available on the web version. On mobile, type your message or use the quick actions.');
-    }
-  }, []);
-
-  const stopListening = useCallback(() => {
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (_e) {
-        // ignore
-      }
-    }
-    setIsListening(false);
-    setInterimTranscript('');
-  }, []);
-
-  const resetTranscript = useCallback(() => {
-    setTranscript('');
-    setInterimTranscript('');
-    setError(null);
-  }, []);
-
-  return {
-    isListening,
-    transcript,
-    interimTranscript,
-    isSupported,
-    error,
-    startListening,
-    stopListening,
-    resetTranscript,
-  };
-}
+            const hasContent = finalTranscript.trim() || lastInterimTranscript.trim();
+            if (recognitionRef.current && hasContent) {
+              try { recognitionRef.current.stop(); } catch (_e) { /*
