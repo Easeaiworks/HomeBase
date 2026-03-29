@@ -27,6 +27,7 @@ interface Household {
   subscription_current_period_end: string | null;
   stripe_customer_id: string | null;
   is_billing_exempt: boolean;
+  header_image_url: string | null;
 }
 
 interface AuthState {
@@ -137,6 +138,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 subscription_current_period_end: h.subscription_current_period_end || null,
                 stripe_customer_id: h.stripe_customer_id || null,
                 is_billing_exempt: h.is_billing_exempt || false,
+                header_image_url: h.header_image_url || null,
               }
             : null,
           isOnboarded: true,
