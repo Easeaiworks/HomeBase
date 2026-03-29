@@ -5,15 +5,15 @@ import { colors, shadows, borderRadius } from '../../constants/theme';
 
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const icons: Record<string, string> = {
-    home: '🏠',
-    calendar: '📅',
-    lists: '🛒',
-    more: '⚙️',
+    home: 'ð ',
+    calendar: 'ð',
+    lists: 'ð',
+    more: 'âï¸',
   };
 
   return (
     <View style={[styles.tabIcon, focused && styles.tabIconActive]}>
-      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || '📱'}</Text>
+      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || 'ð±'}</Text>
     </View>
   );
 }
@@ -57,7 +57,7 @@ export default function TabLayout() {
                 onPress={() => router.push('/voice-assistant')}
               >
                 <View style={styles.voiceCenterInner}>
-                  <Text style={styles.voiceCenterEmoji}>🎙️</Text>
+                  <Text style={styles.voiceCenterEmoji}>ðï¸</Text>
                 </View>
                 <Text style={styles.voiceCenterLabel}>Ask</Text>
               </TouchableOpacity>
@@ -110,7 +110,12 @@ const styles = StyleSheet.create({
   },
   tabIconActive: {
     backgroundColor: colors.green[50],
-    ...shadows.sm,
+    shadowColor: colors.green[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+    transform: [{ scale: 1.05 }],
   },
   emoji: {
     fontSize: 20,
@@ -132,11 +137,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -24,
-    ...shadows.lg,
-    shadowColor: colors.green[600],
-    shadowOpacity: 0.35,
+    shadowColor: colors.green[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 10,
     borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.40)',
+    borderColor: 'rgba(255,255,255,0.50)',
   },
   voiceCenterEmoji: {
     fontSize: 24,
