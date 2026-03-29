@@ -5,16 +5,15 @@ import { colors, shadows, borderRadius } from '../../constants/theme';
 
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const icons: Record<string, string> = {
-    home: '🏠',
-    calendar: '📅',
-    expenses: '💰',
-    lists: '🛒',
-    more: '⚙️',
+    home: 'ð ',
+    calendar: 'ð',
+    lists: 'ð',
+    more: 'âï¸',
   };
 
   return (
     <View style={[styles.tabIcon, focused && styles.tabIconActive]}>
-      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || '📱'}</Text>
+      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || 'ð±'}</Text>
     </View>
   );
 }
@@ -50,8 +49,19 @@ export default function TabLayout() {
         <Tabs.Screen
           name="expenses"
           options={{
-            title: 'Expenses',
-            tabBarIcon: ({ focused }) => <TabIcon name="expenses" focused={focused} />,
+            title: 'Ask',
+            tabBarButton: () => (
+              <TouchableOpacity
+                style={styles.voiceCenterBtn}
+                activeOpacity={0.8}
+                onPress={() => router.push('/voice-assistant')}
+              >
+                <View style={styles.voiceCenterInner}>
+                  <Text style={styles.voiceCenterEmoji}>ðï¸</Text>
+                </View>
+                <Text style={styles.voiceCenterLabel}>Ask</Text>
+              </TouchableOpacity>
+            ),
           }}
         />
         <Tabs.Screen
@@ -69,15 +79,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-
-      {/* Floating Voice Button — glass effect with green glow */}
-      <TouchableOpacity
-        style={styles.voiceButton}
-        activeOpacity={0.8}
-        onPress={() => router.push('/voice-assistant')}
-      >
-        <Text style={styles.voiceEmoji}>🎙️</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -122,24 +123,36 @@ const styles = StyleSheet.create({
   emojiActive: {
     fontSize: 22,
   },
-  voiceButton: {
-    position: 'absolute',
-    bottom: 52,
-    alignSelf: 'center',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  voiceCenterBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 2,
+  },
+  voiceCenterInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.green[500],
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.lg,
-    shadowColor: colors.green[600],
-    shadowOpacity: 0.35,
+    marginTop: -24,
+    shadowColor: colors.green[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 10,
     borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.40)',
-    zIndex: 10,
+    borderColor: 'rgba(255,255,255,0.50)',
   },
-  voiceEmoji: {
-    fontSize: 28,
+  voiceCenterEmoji: {
+    fontSize: 24,
+  },
+  voiceCenterLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.green[600],
+    marginTop: 2,
+    letterSpacing: 0.1,
   },
 });
