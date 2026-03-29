@@ -25,20 +25,20 @@ import type { AIToolResult } from '../services/aiAssistant';
 // Action card for tool results
 function ActionCard({ action }: { action: AIToolResult }) {
   const iconMap: Record<string, string> = {
-    create_event: 'Ã°ÂÂÂ',
-    add_grocery_item: 'Ã°ÂÂÂ',
-    log_expense: 'Ã°ÂÂÂ°',
-    draft_message: 'Ã¢ÂÂÃ¯Â¸Â',
-    search_recipes: 'Ã°ÂÂÂ³',
-    add_maintenance_item: 'Ã°ÂÂÂ§',
-    find_local_service: 'Ã°ÂÂÂª',
-    check_schedule_conflicts: 'Ã¢ÂÂ°',
-    get_budget_status: 'Ã°ÂÂÂ',
-    store_receipt: 'Ã°ÂÂ§Â¾',
-    search_receipts: 'Ã°ÂÂÂ',
+    create_event: 'ð',
+    add_grocery_item: 'ð',
+    log_expense: 'ð°',
+    draft_message: 'âï¸',
+    search_recipes: 'ð³',
+    add_maintenance_item: 'ð§',
+    find_local_service: 'ðª',
+    check_schedule_conflicts: 'â°',
+    get_budget_status: 'ð',
+    store_receipt: 'ð§¾',
+    search_receipts: 'ð',
   };
 
-  const icon = iconMap[action.action] || 'Ã¢ÂÂ';
+  const icon = iconMap[action.action] || 'â';
   const isSuccess = action.result?.success;
 
   return (
@@ -50,7 +50,7 @@ function ActionCard({ action }: { action: AIToolResult }) {
         </Text>
         {action.result?.budget_warning && (
           <View style={styles.budgetWarning}>
-            <Text style={styles.budgetWarningText}>Ã¢ÂÂ Ã¯Â¸Â {action.result.budget_warning}</Text>
+            <Text style={styles.budgetWarningText}>â ï¸ {action.result.budget_warning}</Text>
           </View>
         )}
         {action.result?.requires_approval && (
@@ -125,7 +125,7 @@ function PulseMicButton({ isListening, onPress }: { isListening: boolean; onPres
         onPress={onPress}
         activeOpacity={0.7}
       >
-        <Text style={styles.micEmoji}>{isListening ? 'Ã°ÂÂÂ´' : 'Ã°ÂÂÂÃ¯Â¸Â'}</Text>
+        <Text style={styles.micEmoji}>{isListening ? 'ð´' : 'ðï¸'}</Text>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -196,10 +196,10 @@ export default function VoiceAssistantScreen() {
 
   // Quick action chips
   const quickActions = [
-    { label: "What's on my schedule?", icon: 'Ã°ÂÂÂ' },
-    { label: 'Add to grocery list', icon: 'Ã°ÂÂÂ' },
-    { label: "What's for dinner?", icon: 'Ã°ÂÂÂ³' },
-    { label: 'Check my budget', icon: 'Ã°ÂÂÂ°' },
+    { label: "What's on my schedule?", icon: 'ð' },
+    { label: 'Add to grocery list', icon: 'ð' },
+    { label: "What's for dinner?", icon: 'ð³' },
+    { label: 'Check my budget', icon: 'ð°' },
   ];
 
   return (
@@ -207,7 +207,7 @@ export default function VoiceAssistantScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>Ã¢ÂÂ</Text>
+          <Text style={styles.backText}>â</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>HomeBase</Text>
@@ -230,7 +230,7 @@ export default function VoiceAssistantScreen() {
         >
           {messages.length === 0 && (
             <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeEmoji}>Ã°ÂÂÂ</Text>
+              <Text style={styles.welcomeEmoji}>ð</Text>
               <Text style={styles.welcomeTitle}>Hi! I'm HomeBase</Text>
               <Text style={styles.welcomeText}>
                 I can help with your schedule, expenses, groceries, recipes, maintenance, and more. Just ask!
@@ -270,7 +270,7 @@ export default function VoiceAssistantScreen() {
         {/* Listening indicator */}
         {isListening && (
           <View style={styles.listeningBanner}>
-            <Text style={styles.listeningDot}>Ã°ÂÂÂ´</Text>
+            <Text style={styles.listeningDot}>ð´</Text>
             <Text style={styles.listeningText}>Listening... speak now</Text>
             <TouchableOpacity onPress={stopListening} style={styles.stopBtn}>
               <Text style={styles.stopBtnText}>Done</Text>
@@ -301,7 +301,7 @@ export default function VoiceAssistantScreen() {
                 onPress={handleSend}
                 disabled={isLoading}
               >
-                <Text style={styles.sendEmoji}>Ã¢ÂÂ</Text>
+                <Text style={styles.sendEmoji}>â</Text>
               </TouchableOpacity>
             ) : (
               <PulseMicButton isListening={isListening} onPress={handleMicPress} />
