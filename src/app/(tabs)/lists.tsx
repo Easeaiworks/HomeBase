@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   title: { ...typography.h1, color: colors.gray[900] },
   clearText: { ...typography.bodyBold, color: colors.error },
 
-  inputCard: { marginBottom: 16, padding: 12 },
+  inputCard: { marginBottom: 16, padding: 14 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   input: {
     flex: 1,
@@ -338,6 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.green[500],
     justifyContent: 'center',
     alignItems: 'center',
+    ...shadows.sm,
   },
   addButtonText: { color: colors.white, fontSize: 22, fontWeight: '600' },
 
@@ -361,9 +362,9 @@ const styles = StyleSheet.create({
   categoryChipText: { ...typography.small, color: colors.gray[600] },
 
   dealsBanner: {
-    backgroundColor: colors.blue[50],
+    backgroundColor: 'rgba(59,130,246,0.06)',
     borderWidth: 1,
-    borderColor: colors.blue[200],
+    borderColor: 'rgba(59,130,246,0.12)',
     marginBottom: 20,
   },
   dealsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -379,17 +380,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: colors.white,
-    borderRadius: 10,
-    marginBottom: 6,
-    ...shadows.sm,
+    backgroundColor: colors.glass.elevated,
+    borderRadius: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: colors.gray[300],
     justifyContent: 'center',
@@ -418,9 +421,9 @@ const styles = StyleSheet.create({
   emptySubtext: { ...typography.caption, color: colors.gray[300], marginTop: 4 },
 
   recipeCard: {
-    backgroundColor: colors.green[50],
+    backgroundColor: 'rgba(34,197,94,0.06)',
     borderWidth: 1,
-    borderColor: colors.green[200],
+    borderColor: 'rgba(34,197,94,0.12)',
     marginTop: 20,
   },
   recipeTitle: { ...typography.bodyBold, color: colors.green[800] },

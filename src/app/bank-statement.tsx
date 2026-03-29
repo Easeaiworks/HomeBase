@@ -426,7 +426,7 @@ export default function BankStatementScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
 
   header: {
@@ -436,6 +436,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[100],
+    backgroundColor: colors.glass.nav,
   },
   backButton: {
     width: 40,
@@ -484,9 +485,10 @@ const styles = StyleSheet.create({
   },
   exampleCard: {
     marginBottom: spacing.xl,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.glass.card,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   exampleTitle: {
     ...typography.bodyBold,
@@ -521,6 +523,10 @@ const styles = StyleSheet.create({
 
   transactionCard: {
     marginBottom: spacing.md,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   transactionContent: {
     flexDirection: 'row',
@@ -585,6 +591,7 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: 1,
     borderTopColor: colors.gray[100],
+    backgroundColor: colors.glass.nav,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.md,
@@ -623,6 +630,10 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     minWidth: 250,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   summaryRow: {
     flexDirection: 'row',

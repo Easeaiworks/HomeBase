@@ -262,8 +262,8 @@ export default function SubscriptionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.white },
-  content: { padding: spacing.lg, paddingTop: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing['3xl'] },
 
   header: { alignItems: 'center', marginBottom: 24 },
   headerEmoji: { fontSize: 48, marginBottom: 12 },
@@ -299,8 +299,10 @@ const styles = StyleSheet.create({
 
   planCard: {
     marginBottom: 16,
-    borderWidth: 2,
-    borderColor: colors.gray[100],
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: colors.glass.elevated,
+    ...shadows.glass,
   },
   planCardSelected: {
     borderColor: colors.green[500],
@@ -337,7 +339,7 @@ const styles = StyleSheet.create({
   checkmark: { fontSize: 14, fontWeight: '700', color: colors.green[600] },
   featureText: { ...typography.caption, color: colors.gray[700] },
 
-  subscribeBtn: { marginTop: 8, width: '100%' },
+  subscribeBtn: { marginTop: 8 },
 
   notCreatorBox: {
     backgroundColor: colors.blue[50],

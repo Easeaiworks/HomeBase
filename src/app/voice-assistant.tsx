@@ -319,7 +319,7 @@ export default function VoiceAssistantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.white },
+  container: { flex: 1, backgroundColor: colors.background },
 
   header: {
     flexDirection: 'row',
@@ -328,6 +328,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[100],
+    backgroundColor: colors.glass.nav,
   },
   backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: colors.gray[700] },
@@ -381,8 +382,11 @@ const styles = StyleSheet.create({
   },
   assistantBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
     borderBottomLeftRadius: 4,
+    ...shadows.sm,
   },
   bubbleText: { ...typography.body },
   userText: { color: colors.white },
@@ -397,11 +401,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: colors.green[50],
+    backgroundColor: colors.glass.card,
     borderWidth: 1,
-    borderColor: colors.green[200],
+    borderColor: 'rgba(255,255,255,0.60)',
     borderRadius: borderRadius.lg,
     padding: 12,
+    ...shadows.glass,
   },
   actionCardError: {
     backgroundColor: '#FEF2F2',
@@ -440,7 +445,7 @@ const styles = StyleSheet.create({
   inputArea: {
     borderTopWidth: 1,
     borderTopColor: colors.gray[100],
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.nav,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     paddingBottom: Platform.OS === 'ios' ? 8 : spacing.md,

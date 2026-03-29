@@ -498,11 +498,13 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, paddingBottom: 100 },
 
   itemCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.elevated,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   itemHeader: { marginBottom: spacing.sm },
   itemTitleSection: { flex: 1 },

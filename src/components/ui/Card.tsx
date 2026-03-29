@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
 import { colors, borderRadius, shadows } from '../../constants/theme';
 
 interface CardProps {
@@ -18,18 +18,24 @@ export function Card({ children, style, variant = 'default' }: CardProps) {
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.card,
     borderRadius: borderRadius.xl,
     padding: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.glass.border,
   },
   default: {
-    ...shadows.md,
+    ...shadows.glass,
   },
   elevated: {
+    backgroundColor: colors.glass.elevated,
     ...shadows.lg,
+    borderColor: 'rgba(255,255,255,0.70)',
   },
   outlined: {
+    backgroundColor: colors.glass.card,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: 'rgba(0,0,0,0.06)',
   },
 });

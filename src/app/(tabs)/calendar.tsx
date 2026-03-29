@@ -381,6 +381,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: borderRadius.lg,
+    ...shadows.sm,
   },
   addBtnText: { ...typography.caption, color: colors.white, fontWeight: '700' },
 
@@ -388,7 +389,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   navArrow: { fontSize: 28, color: colors.green[600], fontWeight: '300', paddingHorizontal: 8 },
   monthLabel: { ...typography.h3, color: colors.gray[900] },
@@ -437,12 +438,14 @@ const styles = StyleSheet.create({
 
   eventCard: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
     borderRadius: borderRadius.lg,
     padding: 14,
-    marginBottom: 8,
+    marginBottom: 10,
     gap: 12,
-    ...shadows.sm,
+    ...shadows.glass,
   },
   eventTime: {
     backgroundColor: colors.green[50],
@@ -464,13 +467,13 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.40)',
     justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: borderRadius['2xl'],
+    borderTopRightRadius: borderRadius['2xl'],
     padding: 24,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
@@ -484,9 +487,9 @@ const styles = StyleSheet.create({
   modalClose: { fontSize: 22, color: colors.gray[400], padding: 4 },
   modalDate: { ...typography.body, color: colors.green[600], marginBottom: 16 },
   modalInput: {
-    backgroundColor: colors.gray[50],
+    backgroundColor: 'rgba(255,255,255,0.70)',
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: 'rgba(0,0,0,0.08)',
     borderRadius: borderRadius.lg,
     paddingHorizontal: 14,
     paddingVertical: 12,

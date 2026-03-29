@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.gray[100],
+    backgroundColor: colors.glass.nav, borderBottomWidth: 1, borderBottomColor: colors.gray[100],
   },
   backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: colors.gray[700] },
@@ -281,7 +281,13 @@ const styles = StyleSheet.create({
 
   content: { padding: spacing.lg },
 
-  householdCard: { marginBottom: 16, backgroundColor: colors.green[50], borderWidth: 1, borderColor: colors.green[200] },
+  householdCard: {
+    marginBottom: 16,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+  },
   householdName: { ...typography.h3, color: colors.green[800] },
   memberCount: { ...typography.caption, color: colors.green[600], marginTop: 4 },
   inviteSection: {
@@ -306,7 +312,13 @@ const styles = StyleSheet.create({
   },
   pendingText: { ...typography.bodyBold, color: '#92400E' },
 
-  memberCard: { marginBottom: 12 },
+  memberCard: {
+    marginBottom: 12,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+  },
   memberHeader: { flexDirection: 'row', gap: 12 },
   avatar: {
     width: 46, height: 46, borderRadius: 23,

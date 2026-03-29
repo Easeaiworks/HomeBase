@@ -92,9 +92,9 @@ export default function ChangePasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.white },
+  container: { flex: 1, backgroundColor: colors.background },
   content: {
-    flex: 1, justifyContent: 'center', padding: spacing['3xl'],
+    flex: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingVertical: spacing['3xl'],
   },
   emoji: { fontSize: 48, textAlign: 'center', marginBottom: 16 },
   title: { ...typography.h2, color: colors.gray[900], textAlign: 'center', marginBottom: 8 },

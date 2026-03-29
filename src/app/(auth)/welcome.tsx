@@ -62,11 +62,11 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing['3xl'],
+    paddingHorizontal: spacing.xl,
     justifyContent: 'center',
   },
   logoContainer: {
@@ -77,10 +77,13 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: colors.green[50],
+    backgroundColor: colors.glass.elevated,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    ...shadows.glass,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
   },
   logoEmoji: {
     fontSize: 42,
@@ -97,11 +100,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   features: {
-    backgroundColor: colors.gray[50],
-    borderRadius: 16,
+    backgroundColor: colors.glass.card,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 40,
     gap: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   featureRow: {
     flexDirection: 'row',
@@ -118,7 +124,5 @@ const styles = StyleSheet.create({
   actions: {
     gap: 8,
   },
-  button: {
-    width: '100%',
-  },
+  button: {},
 });

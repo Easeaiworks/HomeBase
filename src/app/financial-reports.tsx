@@ -616,15 +616,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[100],
+    backgroundColor: colors.glass.nav,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.elevated,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   backButtonText: {
     fontSize: 28,
@@ -659,14 +662,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   periodBtnActive: {
-    backgroundColor: colors.white,
-    ...shadows.sm,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   periodText: { ...typography.caption, fontWeight: '600', color: colors.gray[500] },
   periodTextActive: { color: colors.green[600] },
 
   // Summary
-  summaryCard: { marginBottom: spacing.lg, paddingVertical: spacing.lg },
+  summaryCard: {
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.lg,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+  },
   summaryTitle: {
     ...typography.bodyBold,
     color: colors.gray[700],
@@ -689,7 +701,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     marginTop: spacing.lg,
   },
-  breakdownCard: { marginBottom: spacing.lg },
+  breakdownCard: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+  },
   barItem: { marginBottom: spacing.md },
   barLabel: {
     flexDirection: 'row',
@@ -713,7 +731,13 @@ const styles = StyleSheet.create({
   barPercentage: { ...typography.small, color: colors.gray[500], textAlign: 'right' },
 
   // Top vendors
-  vendorsCard: { marginBottom: spacing.lg },
+  vendorsCard: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+  },
   vendorItem: { paddingVertical: spacing.md },
   vendorItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.gray[100] },
   vendorInfo: { marginBottom: spacing.xs },
@@ -722,7 +746,13 @@ const styles = StyleSheet.create({
   vendorAmount: { ...typography.bodyBold, color: colors.green[600] },
 
   // Trend chart
-  trendCard: { marginBottom: spacing.lg },
+  trendCard: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+  },
   chartContainer: { width: '100%' },
   chartBars: {
     flexDirection: 'row',
@@ -741,7 +771,14 @@ const styles = StyleSheet.create({
   exportBtn: { flex: 1 },
 
   // Empty state
-  emptyCard: { alignItems: 'center', paddingVertical: spacing.xl },
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    backgroundColor: colors.glass.card,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
+  },
   emptyEmoji: { fontSize: 48, marginBottom: spacing.md },
   emptyText: { ...typography.body, color: colors.gray[400] },
   emptySubtext: { ...typography.caption, color: colors.gray[300], marginTop: spacing.xs },

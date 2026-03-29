@@ -299,7 +299,7 @@ export default function AddExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
 
   header: {
@@ -308,7 +308,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+    backgroundColor: colors.glass.nav,
   },
   backButton: {
     width: 40,
@@ -403,7 +404,8 @@ const styles = StyleSheet.create({
 
   footer: {
     borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
+    borderTopColor: 'rgba(0,0,0,0.06)',
+    backgroundColor: colors.glass.nav,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.md,

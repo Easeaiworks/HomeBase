@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
-import { colors, shadows } from '../../constants/theme';
+import { colors, shadows, borderRadius } from '../../constants/theme';
 
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const icons: Record<string, string> = {
@@ -14,7 +14,7 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
 
   return (
     <View style={[styles.tabIcon, focused && styles.tabIconActive]}>
-      <Text style={styles.emoji}>{icons[name] || '📱'}</Text>
+      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || '📱'}</Text>
     </View>
   );
 }
@@ -70,7 +70,7 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* Floating Voice Button */}
+      {/* Floating Voice Button — glass effect with green glow */}
       <TouchableOpacity
         style={styles.voiceButton}
         activeOpacity={0.8}
@@ -87,9 +87,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabBar: {
-    backgroundColor: colors.white,
-    borderTopWidth: 0,
-    height: 85,
+    backgroundColor: colors.glass.nav,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(0,0,0,0.06)',
+    height: 88,
     paddingTop: 8,
     paddingBottom: 24,
     ...shadows.lg,
@@ -97,23 +98,28 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     fontWeight: '600',
+    letterSpacing: 0.1,
   },
   tabIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabIconActive: {
     backgroundColor: colors.green[50],
+    ...shadows.sm,
   },
   emoji: {
     fontSize: 20,
   },
+  emojiActive: {
+    fontSize: 22,
+  },
   voiceButton: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 52,
     alignSelf: 'center',
     width: 64,
     height: 64,
@@ -123,7 +129,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...shadows.lg,
     shadowColor: colors.green[600],
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.40)',
     zIndex: 10,
   },
   voiceEmoji: {

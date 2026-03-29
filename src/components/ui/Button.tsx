@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, borderRadius, typography } from '../../constants/theme';
+import { colors, borderRadius, typography, shadows } from '../../constants/theme';
 
 interface ButtonProps {
   title: string;
@@ -45,11 +45,11 @@ export function Button({
       ]}
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? colors.white : colors.green[600]}
+          color={variant === 'primary' || variant === 'secondary' ? colors.white : colors.green[600]}
           size="small"
         />
       ) : (
@@ -76,30 +76,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'stretch',
     gap: 8,
+    borderRadius: borderRadius.lg,
+    minHeight: 48,
   },
   // Variant backgrounds
   primaryBg: {
     backgroundColor: colors.green[500],
-    borderRadius: borderRadius.lg,
+    ...shadows.md,
+    shadowColor: colors.green[600],
+    shadowOpacity: 0.25,
   },
   secondaryBg: {
     backgroundColor: colors.blue[500],
-    borderRadius: borderRadius.lg,
+    ...shadows.md,
+    shadowColor: colors.blue[600],
+    shadowOpacity: 0.25,
   },
   outlineBg: {
-    backgroundColor: 'transparent',
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass.card,
     borderWidth: 1.5,
-    borderColor: colors.green[500],
+    borderColor: colors.green[400],
+    ...shadows.sm,
   },
   ghostBg: {
     backgroundColor: 'transparent',
   },
-  // Sizes
-  smSize: { paddingHorizontal: 14, paddingVertical: 8 },
-  mdSize: { paddingHorizontal: 20, paddingVertical: 14 },
-  lgSize: { paddingHorizontal: 28, paddingVertical: 18 },
+  // Sizes — all meet 44pt minimum touch target
+  smSize: { paddingHorizontal: 16, paddingVertical: 10, minHeight: 44 },
+  mdSize: { paddingHorizontal: 22, paddingVertical: 14, minHeight: 48 },
+  lgSize: { paddingHorizontal: 28, paddingVertical: 18, minHeight: 56 },
   // Text
   text: {
     fontWeight: '600',

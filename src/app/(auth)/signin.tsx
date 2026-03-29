@@ -89,11 +89,14 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.white },
+  container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   content: {
-    padding: spacing['3xl'],
+    flexGrow: 1,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing['5xl'],
+    paddingBottom: spacing['3xl'],
+    alignItems: 'stretch',
   },
   logoContainer: {
     alignItems: 'center',
@@ -119,15 +122,16 @@ const styles = StyleSheet.create({
   error: {
     ...typography.caption,
     color: colors.error,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239,68,68,0.08)',
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.12)',
   },
   button: {
-    marginTop: 8,
-    marginBottom: 12,
-    width: '100%',
+    marginTop: 12,
+    marginBottom: 14,
   },
 });

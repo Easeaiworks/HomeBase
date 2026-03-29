@@ -407,14 +407,16 @@ const styles = StyleSheet.create({
 
   serviceChip: {
     flex: 0.5,
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.card,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   serviceChipIcon: { fontSize: 32 },
   serviceChipText: { ...typography.bodyBold, color: colors.gray[900], textAlign: 'center' },

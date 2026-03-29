@@ -484,9 +484,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1, minWidth: '46%',
-    backgroundColor: colors.white, borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass.elevated, borderRadius: borderRadius.lg,
     padding: 14, borderLeftWidth: 4,
-    ...shadows.sm,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   statValue: { fontSize: 28, fontWeight: '800' },
   statLabel: { ...typography.small, color: colors.gray[500], marginTop: 2 },
@@ -503,20 +504,21 @@ const styles = StyleSheet.create({
 
   // Tabs
   tabs: {
-    flexDirection: 'row', backgroundColor: colors.gray[200],
+    flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.04)',
     borderRadius: borderRadius.lg, padding: 3, marginBottom: 16,
   },
   tab: {
     flex: 1, paddingVertical: 10, borderRadius: borderRadius.md, alignItems: 'center',
   },
-  tabActive: { backgroundColor: colors.white, ...shadows.sm },
+  tabActive: { backgroundColor: colors.glass.elevated, ...shadows.glass },
   tabText: { ...typography.caption, fontWeight: '600', color: colors.gray[500] },
   tabTextActive: { color: colors.gray[900] },
 
   // User cards
   userCard: {
-    backgroundColor: colors.white, borderRadius: borderRadius.xl,
-    padding: 14, marginBottom: 10, ...shadows.sm,
+    backgroundColor: colors.glass.elevated, borderRadius: borderRadius.xl,
+    padding: 14, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.60)',
+    ...shadows.glass,
   },
   userHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userAvatar: {

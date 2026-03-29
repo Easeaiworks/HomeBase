@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TextInputProps } from 'react-native';
-import { colors, borderRadius, typography } from '../../constants/theme';
+import { colors, borderRadius, typography, shadows } from '../../constants/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -38,28 +38,32 @@ export function Input({ label, error, icon, style, ...props }: InputProps) {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
+    width: '100%',
   },
   label: {
     ...typography.bodyBold,
-    color: colors.gray[700],
-    marginBottom: 6,
+    color: colors.gray[600],
+    marginBottom: 8,
+    marginLeft: 4,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.input,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.gray[200],
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
     paddingHorizontal: 16,
+    width: '100%',
+    minHeight: 52,
+    ...shadows.sm,
   },
   focused: {
-    borderColor: colors.green[500],
+    borderColor: colors.green[400],
+    backgroundColor: 'rgba(255,255,255,0.90)',
+    ...shadows.glass,
     shadowColor: colors.green[500],
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.12,
   },
   errorBorder: {
     borderColor: colors.error,
@@ -76,7 +80,7 @@ const styles = StyleSheet.create({
   error: {
     ...typography.caption,
     color: colors.error,
-    marginTop: 4,
+    marginTop: 6,
     marginLeft: 4,
   },
 });

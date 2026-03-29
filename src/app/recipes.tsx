@@ -614,10 +614,10 @@ const styles = StyleSheet.create({
     flex: 1,
     ...typography.body,
     color: colors.gray[900],
-    backgroundColor: colors.white,
+    backgroundColor: 'rgba(255,255,255,0.70)',
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: 'rgba(0,0,0,0.08)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
@@ -634,10 +634,10 @@ const styles = StyleSheet.create({
   suggestBanner: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,
-    backgroundColor: colors.blue[50],
+    backgroundColor: 'rgba(59,130,246,0.06)',
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.blue[200],
+    borderColor: 'rgba(59,130,246,0.12)',
     padding: spacing.md,
   },
   suggestContent: {
@@ -656,18 +656,20 @@ const styles = StyleSheet.create({
   },
 
   recipeCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.glass.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.60)',
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    padding: spacing.lg,
     marginBottom: spacing.md,
-    ...shadows.sm,
+    ...shadows.glass,
   },
   cardHeader: {
     marginBottom: spacing.sm,
   },
   cardTitle: { flex: 1 },
-  recipeName: { ...typography.bodyBold, color: colors.gray[900], marginBottom: 4 },
-  recipeDescription: { ...typography.caption, color: colors.gray[500] },
+  recipeName: { ...typography.bodyBold, color: colors.gray[900], marginBottom: 4, fontSize: 16 },
+  recipeDescription: { ...typography.caption, color: colors.gray[500], lineHeight: 18 },
 
   cardInfo: {
     flexDirection: 'row',
@@ -688,7 +690,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   tagChip: {
-    backgroundColor: colors.green[50],
+    backgroundColor: 'rgba(34,197,94,0.10)',
     borderRadius: borderRadius.full,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
@@ -697,7 +699,7 @@ const styles = StyleSheet.create({
   moreTagsText: { ...typography.small, color: colors.gray[500], paddingHorizontal: 4 },
 
   // Modal styles
-  modalContainer: { flex: 1, backgroundColor: colors.white },
+  modalContainer: { flex: 1, backgroundColor: colors.background },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',

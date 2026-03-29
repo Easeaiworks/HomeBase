@@ -133,11 +133,12 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg },
   title: { ...typography.h1, color: colors.gray[900], marginBottom: 16 },
 
-  profileCard: { marginBottom: 24 },
+  profileCard: { marginBottom: 24, ...shadows.glass },
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatar: {
     width: 52, height: 52, borderRadius: 26,
     backgroundColor: colors.green[100], justifyContent: 'center', alignItems: 'center',
+    ...shadows.sm, borderWidth: 2, borderColor: 'rgba(255,255,255,0.50)',
   },
   avatarText: { fontSize: 22, fontWeight: '700', color: colors.green[700] },
   profileName: { ...typography.h3, color: colors.gray[900] },
@@ -155,23 +156,23 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: { ...typography.bodyBold, color: colors.gray[700], marginBottom: 8 },
-  menuCard: { marginBottom: 20, padding: 4 },
+  menuCard: { marginBottom: 20, padding: 6 },
   menuItem: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    paddingVertical: 14, paddingHorizontal: 12,
+    paddingVertical: 16, paddingHorizontal: 16,
     borderBottomWidth: 1, borderBottomColor: colors.gray[100],
   },
-  menuEmoji: { fontSize: 22 },
+  menuEmoji: { fontSize: 24, width: 32, textAlign: 'center' as const },
   menuText: { flex: 1 },
   menuTitle: { ...typography.bodyBold, color: colors.gray[900] },
-  menuSubtitle: { ...typography.caption, color: colors.gray[500] },
+  menuSubtitle: { ...typography.caption, color: colors.gray[500], marginTop: 2 },
   menuArrow: { fontSize: 22, color: colors.gray[300] },
 
   signOutBtn: {
     alignItems: 'center', paddingVertical: 14,
-    backgroundColor: colors.white, borderRadius: 12,
-    borderWidth: 1, borderColor: colors.error,
-    marginTop: 8,
+    backgroundColor: colors.glass.card, borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.30)',
+    marginTop: 8, ...shadows.sm,
   },
   signOutText: { ...typography.bodyBold, color: colors.error },
   version: {
