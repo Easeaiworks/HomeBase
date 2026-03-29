@@ -49,5 +49,5 @@
     "typescript": "~5.9.2"
   },
   "private": true,
-  "buildNote": "v2.2 - UTF-8 emoji fix"
+  "buildNote": "v2.3 - complete emoji repair pass 2"
 }
