@@ -1,6 +1,7 @@
 import React from 'react';
-import { Tabs, useRouter } from 'expo-router';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { Tabs, useRouter, Redirect } from 'expo-router';
+import { View, TouchableOpacity, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import { useAuthStore } from '../../stores/authStore';
 import { colors, shadows, borderRadius } from '../../constants/theme';
 
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -20,6 +21,26 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
 
 export default function TabLayout() {
   const router = useRouter();
+  const { session, isLoading, isOnboarded } = useAuthStore();
+
+  // Auth guard: show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.green[500]} />
+      </View>
+    );
+  }
+
+  // Not logged in: redirect to welcome/login
+  if (!session) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
+  // Logged in but no household: redirect to onboarding
+  if (!isOnboarded) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return (
     <View style={styles.container}>
