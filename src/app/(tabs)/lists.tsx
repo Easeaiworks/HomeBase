@@ -48,7 +48,7 @@ function GroceryItemRow({
   return (
     <TouchableOpacity style={styles.itemRow} onPress={onToggle} onLongPress={onDelete}>
       <View style={[styles.checkbox, item.is_checked && styles.checkboxChecked]}>
-        {item.is_checked && <Text style={styles.checkmark}>Ã¢ÂÂ</Text>}
+        {item.is_checked && <Text style={styles.checkmark}>â</Text>}
       </View>
       <View style={styles.itemInfo}>
         <Text style={[styles.itemText, item.is_checked && styles.itemTextChecked]}>
@@ -172,7 +172,7 @@ export default function ListsScreen() {
               onPress={() => setShowCategories(!showCategories)}
             >
               <Text style={styles.categoryToggleText}>
-                {selectedCategory || 'Ã°ÂÂÂ·Ã¯Â¸Â'}
+                {selectedCategory || 'ð·ï¸'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
@@ -215,7 +215,7 @@ export default function ListsScreen() {
         {uncheckedItems.length > 0 && (
           <Card style={styles.dealsBanner}>
             <View style={styles.dealsRow}>
-              <Text style={styles.dealsEmoji}>Ã°ÂÂÂ·Ã¯Â¸Â</Text>
+              <Text style={styles.dealsEmoji}>ð·ï¸</Text>
               <View style={styles.dealsText}>
                 <Text style={styles.dealsTitle}>Find Deals Nearby</Text>
                 <Text style={styles.dealsSubtitle}>
@@ -267,7 +267,7 @@ export default function ListsScreen() {
         {uncheckedItems.length === 0 && checkedItems.length === 0 && (
           <Card variant="outlined" style={{ marginTop: 16 }}>
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>Ã°ÂÂÂ</Text>
+              <Text style={styles.emptyEmoji}>ð</Text>
               <Text style={styles.emptyText}>Your grocery list is empty</Text>
               <Text style={styles.emptySubtext}>
                 Type above, use voice, or say "Add milk to my list"
@@ -278,7 +278,7 @@ export default function ListsScreen() {
 
         {/* Recipe suggestion */}
         <Card style={styles.recipeCard}>
-          <Text style={styles.recipeTitle}>Ã°ÂÂÂ³ What's for dinner?</Text>
+          <Text style={styles.recipeTitle}>ð³ What's for dinner?</Text>
           <Text style={styles.recipeSubtitle}>
             Tell us what you have and we'll suggest recipes
           </Text>
