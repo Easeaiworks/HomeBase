@@ -1,5 +1,5 @@
 /**
- * Home Dashboard Tab â Homer-inspired layout
+ * Home Dashboard Tab — Homer-inspired layout
  * Hero section with household name, search + ask bar,
  * 2x3 grid of category icons, stacked dashboard cards
  */
@@ -31,7 +31,7 @@ const GRID_PADDING = spacing.lg;
 const GRID_COLS = 3;
 const GRID_ITEM_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;
 
-// âââ Category Grid Icon âââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Category Grid Icon ─────────────────────────────────────────────────────
 function CategoryIcon({ emoji, label, onPress, color }: {
   emoji: string; label: string; onPress: () => void; color: string;
 }) {
@@ -50,7 +50,7 @@ function CategoryIcon({ emoji, label, onPress, color }: {
   );
 }
 
-// âââ Section Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section Card ────────────────────────────────────────────────────────
 function SectionCard({ title, emoji, onPress, children, rightLabel }: {
   title: string; emoji: string; onPress?: () => void; children: React.ReactNode; rightLabel?: string;
 }) {
@@ -280,7 +280,7 @@ export default function HomeScreen() {
   const budgetRemaining = totalBudget - totalSpent;
   const budgetPct = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
   const budgetColor = budgetPct > 90 ? colors.error : budgetPct > 70 ? colors.warning : colors.green[500];
-  const categoryEmoji: Record<string, string> = { home: 'ð ', vehicle: 'ð', pet: 'ð¾', appliance: 'ð§' };
+  const categoryEmoji: Record<string, string> = { home: '🏠', vehicle: '🚗', pet: '🐾', appliance: '🔧' };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -363,7 +363,7 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-        {/* ââ Trial Banner ââââââââââââââââââââââ */}
+        {/* ── Trial Banner ────────────────────── */}
         {isTrialActive && !isSubscribed && (
           <TouchableOpacity
             style={styles.trialBanner}
@@ -372,13 +372,13 @@ export default function HomeScreen() {
           >
             <Text style={styles.trialText}>
               {trialDaysRemaining <= 3
-                ? 'â ï¸ Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' â Upgrade now'
-                : 'â¨ Free trial: ' + trialDaysRemaining + ' days remaining'}
+                ? '⚠️ Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' — Upgrade now'
+                : '✨ Free trial: ' + trialDaysRemaining + ' days remaining'}
             </Text>
           </TouchableOpacity>
         )}
 
-        {/* ââ Search + Ask Bar ââââââââââââââââââ */}
+        {/* ── Search + Ask Bar ────────────────── */}
         <View style={styles.searchRow}>
           <PressableScale
             style={styles.searchBar}
@@ -386,7 +386,7 @@ export default function HomeScreen() {
             activeScale={0.98}
             glowColor="#9CA3AF"
           >
-            <Text style={styles.searchIcon}>ð</Text>
+            <Text style={styles.searchIcon}>🔍</Text>
             <Text style={styles.searchPlaceholder}>Search HomeBase...</Text>
           </PressableScale>
           <PressableScale
@@ -395,26 +395,26 @@ export default function HomeScreen() {
             activeScale={0.93}
             glowColor="#22C55E"
           >
-            <Text style={styles.askIcon}>ð£ï¸</Text>
+            <Text style={styles.askIcon}>🗣️</Text>
             <Text style={styles.askLabel}>Ask</Text>
           </PressableScale>
         </View>
 
-        {/* ââ Category Grid (2 rows Ã 3 cols) ââââââ */}
+        {/* ── Category Grid (2 rows × 3 cols) ────── */}
         <View style={styles.categoryGrid}>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="ð" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
-            <CategoryIcon emoji="ð°" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
-            <CategoryIcon emoji="ð" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
+            <CategoryIcon emoji="📅" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
+            <CategoryIcon emoji="💰" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
+            <CategoryIcon emoji="🛒" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
           </View>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="ð³" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
-            <CategoryIcon emoji="ð§" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
-            <CategoryIcon emoji="ð¸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
+            <CategoryIcon emoji="🍳" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
+            <CategoryIcon emoji="🔧" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
+            <CategoryIcon emoji="📸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
           </View>
         </View>
 
-        {/* ââ Dashboard Cards âââââââââââââââââââââ */}
+        {/* ── Dashboard Cards ───────────────────── */}
         {isLoading ? (
           <ActivityIndicator color={colors.green[500]} style={{ marginTop: 24 }} />
         ) : (
@@ -422,7 +422,7 @@ export default function HomeScreen() {
             {/* Today's Schedule */}
             <SectionCard
               title="Today's Schedule"
-              emoji="ð"
+              emoji="📅"
               onPress={() => router.push('/(tabs)/calendar')}
             >
               {todayEvents.length > 0 ? (
@@ -436,7 +436,7 @@ export default function HomeScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.eventName}>{event.title}</Text>
                       {event.location && (
-                        <Text style={styles.eventLoc}>ð {event.location}</Text>
+                        <Text style={styles.eventLoc}>📍 {event.location}</Text>
                       )}
                     </View>
                   </View>
@@ -452,7 +452,7 @@ export default function HomeScreen() {
             {/* Budget Snapshot */}
             <SectionCard
               title="This Month"
-              emoji="ð°"
+              emoji="💰"
               onPress={() => router.push('/(tabs)/expenses')}
             >
               <View style={styles.budgetRow}>
@@ -485,7 +485,7 @@ export default function HomeScreen() {
             {/* Grocery List */}
             <SectionCard
               title="Grocery List"
-              emoji="ð"
+              emoji="🛒"
               onPress={() => router.push('/(tabs)/lists')}
               rightLabel={groceryCount > 0 ? groceryCount + ' items' : undefined}
             >
@@ -512,7 +512,7 @@ export default function HomeScreen() {
             {/* Upcoming Maintenance */}
             <SectionCard
               title="Maintenance"
-              emoji="ð§"
+              emoji="🔧"
               onPress={() => router.push('/maintenance')}
             >
               {maintenance.length > 0 ? (
@@ -529,7 +529,7 @@ export default function HomeScreen() {
                           </Text>
                         )}
                       </View>
-                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || 'ð§'}</Text>
+                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || '🔧'}</Text>
                     </View>
                   );
                 })
@@ -542,27 +542,27 @@ export default function HomeScreen() {
             </SectionCard>
 
             {/* Quick Tips */}
-            <SectionCard title="Quick Tips" emoji="ð¡">
+            <SectionCard title="Quick Tips" emoji="💡">
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>ð</Text>
+                  <Text style={styles.tipIcon}>📖</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Guides</Text>
                   <Text style={styles.tipDesc}>Tips for managing your home</Text>
                 </View>
-                <Text style={styles.tipArrow}>âº</Text>
+                <Text style={styles.tipArrow}>›</Text>
               </View>
               <View style={styles.tipDivider} />
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>â­</Text>
+                  <Text style={styles.tipIcon}>⭐</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Favorites</Text>
                   <Text style={styles.tipDesc}>Quick access to your most used items</Text>
                 </View>
-                <Text style={styles.tipArrow}>âº</Text>
+                <Text style={styles.tipArrow}>›</Text>
               </View>
             </SectionCard>
           </>
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
 
-  // ââ Hero ââââââââââââââââââââââââââââââââââââââââââ
+  // ── Hero ──────────────────────────────────────────
   hero: {
     backgroundColor: colors.green[600],
     paddingTop: 8,
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
   },
 
 
-  // ââ Trial Banner ââââââââââââââââââââââââââââââââââââ
+  // ── Trial Banner ────────────────────────────────────
   trialBanner: {
     backgroundColor: 'rgba(59,130,246,0.08)',
     paddingVertical: 10,
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   },
   trialText: { ...typography.caption, color: colors.blue[700], fontWeight: '600', textAlign: 'center' as const },
 
-  // ââ Search + Ask Bar ââââââââââââââââââââââââââââââââ
+  // ── Search + Ask Bar ────────────────────────────────
   searchRow: {
     flexDirection: 'row',
     gap: 10,
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
   askIcon: { fontSize: 16 },
   askLabel: { ...typography.bodyBold, color: colors.white },
 
-  // ââ Category Grid âââââââââââââââââââââââââââââââââââ
+  // ── Category Grid ───────────────────────────────────
   categoryGrid: {
     paddingHorizontal: GRID_PADDING,
     marginBottom: 20,
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
   categoryEmoji: { fontSize: 26 },
   categoryLabel: { ...typography.small, color: colors.gray[600], fontWeight: '600' },
 
-  // ââ Section Cards ââââââââââââââââââââââââââââââââââ
+  // ── Section Cards ──────────────────────────────────
   sectionCard: {
     marginHorizontal: GRID_PADDING,
     marginBottom: 14,
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.bodyBold, color: colors.gray[900] },
   sectionAction: { ...typography.caption, color: colors.green[600], fontWeight: '600' },
 
-  // ââ Events âââââââââââââââââââââââââââââââââââââââââ
+  // ── Events ─────────────────────────────────────────
   eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
   eventName: { ...typography.body, color: colors.gray[900] },
   eventLoc: { ...typography.small, color: colors.gray[400], marginTop: 2 },
 
-  // ââ Budget âââââââââââââââââââââââââââââââââââââââââ
+  // ── Budget ─────────────────────────────────────────
   budgetRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 
-  // ââ Grocery ââââââââââââââââââââââââââââââââââââââââ
+  // ── Grocery ────────────────────────────────────────
   groceryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -840,7 +840,7 @@ const styles = StyleSheet.create({
   groceryName: { ...typography.body, color: colors.gray[700] },
   groceryMore: { ...typography.small, color: colors.gray[400], marginTop: 8, textAlign: 'center' as const },
 
-  // ââ Maintenance ââââââââââââââââââââââââââââââââââââ
+  // ── Maintenance ────────────────────────────────────
   maintRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -859,12 +859,12 @@ const styles = StyleSheet.create({
   maintDue: { ...typography.small, color: colors.gray[400], marginTop: 2 },
   maintCatEmoji: { fontSize: 18 },
 
-  // ââ Empty State ââââââââââââââââââââââââââââââââââââ
+  // ── Empty State ────────────────────────────────────
   emptyState: { alignItems: 'center', paddingVertical: 16 },
   emptyText: { ...typography.body, color: colors.gray[400] },
   emptyHint: { ...typography.small, color: colors.gray[300], marginTop: 4 },
 
-  // ââ Tips âââââââââââââââââââââââââââââââââââââââââââ
+  // ── Tips ───────────────────────────────────────────
   tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
