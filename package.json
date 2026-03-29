@@ -48,5 +48,6 @@
     "@types/react": "~19.2.2",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "buildNote": "v2.1 - header personalization + enhanced press effects"
 }
