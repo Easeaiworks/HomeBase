@@ -30,7 +30,7 @@ export default function OnboardingScreen() {
     if (err) {
       setError(err.message);
     } else {
-      // Household created â navigate to index which routes to home or pending approval
+      // Household created — navigate to index which routes to home or pending approval
       router.replace('/');
     }
   };
@@ -50,7 +50,7 @@ export default function OnboardingScreen() {
     if (err) {
       setError(err.message);
     } else {
-      // Joined household â navigate to index which routes to pending approval screen
+      // Joined household — navigate to index which routes to pending approval screen
       router.replace('/');
     }
   };
@@ -68,10 +68,10 @@ export default function OnboardingScreen() {
         {mode === 'choose' && (
           <View style={styles.options}>
             <Card style={styles.optionCard}>
-              <Text style={styles.optionEmoji}>ð¡</Text>
+              <Text style={styles.optionEmoji}>🏡</Text>
               <Text style={styles.optionTitle}>Create a Household</Text>
               <Text style={styles.optionDesc}>
-                Start fresh â you'll be the admin and can invite family members.
+                Start fresh — you'll be the admin and can invite family members.
               </Text>
               <Button
                 title="Create Household"
@@ -83,7 +83,7 @@ export default function OnboardingScreen() {
             </Card>
 
             <Card style={styles.optionCard}>
-              <Text style={styles.optionEmoji}>ð</Text>
+              <Text style={styles.optionEmoji}>🔗</Text>
               <Text style={styles.optionTitle}>Join a Household</Text>
               <Text style={styles.optionDesc}>
                 Someone in your family already set things up? Enter their invite code.

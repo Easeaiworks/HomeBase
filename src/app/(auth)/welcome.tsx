@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
         {/* Logo area */}
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoEmoji}>ð </Text>
+            <Text style={styles.logoEmoji}>🏠</Text>
           </View>
           <Text style={styles.appName}>HomeBase</Text>
           <Text style={styles.tagline}>
@@ -26,10 +26,10 @@ export default function WelcomeScreen() {
         {/* Feature highlights */}
         <View style={styles.features}>
           {[
-            { icon: 'ð£ï¸', text: 'Voice-powered scheduling' },
-            { icon: 'ð°', text: 'Smart expense tracking' },
-            { icon: 'ð', text: 'Grocery lists with deals' },
-            { icon: 'ð³', text: 'Recipe suggestions' },
+            { icon: '🗣️', text: 'Voice-powered scheduling' },
+            { icon: '💰', text: 'Smart expense tracking' },
+            { icon: '🛒', text: 'Grocery lists with deals' },
+            { icon: '🍳', text: 'Recipe suggestions' },
           ].map((feature, i) => (
             <View key={i} style={styles.featureRow}>
               <Text style={styles.featureIcon}>{feature.icon}</Text>

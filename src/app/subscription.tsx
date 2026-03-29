@@ -1,6 +1,6 @@
 /**
  * Subscription / Paywall Screen
- * Shows when trial expires â user must pick a plan to continue.
+ * Shows when trial expires — user must pick a plan to continue.
  * Handles Stripe checkout for web, App Store / Google Play for native.
  */
 import React, { useState } from 'react';
@@ -132,7 +132,7 @@ export default function SubscriptionScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerEmoji}>
-            {isTrialActive ? 'â°' : 'ð'}
+            {isTrialActive ? '⏰' : '🔒'}
           </Text>
           <Text style={styles.title}>
             {isTrialActive
@@ -204,7 +204,7 @@ export default function SubscriptionScreen() {
                 <View style={styles.featureList}>
                   {plan.features.map((f, i) => (
                     <View key={i} style={styles.featureRow}>
-                      <Text style={styles.checkmark}>â</Text>
+                      <Text style={styles.checkmark}>✓</Text>
                       <Text style={styles.featureText}>{f}</Text>
                     </View>
                   ))}

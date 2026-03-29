@@ -274,7 +274,7 @@ export default function BankStatementScreen() {
               item.selected && styles.checkboxActive,
             ]}
           >
-            {item.selected && <Text style={styles.checkmark}>â</Text>}
+            {item.selected && <Text style={styles.checkmark}>✓</Text>}
           </View>
         </View>
 
@@ -304,7 +304,7 @@ export default function BankStatementScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backText}>â</Text>
+            <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bank Statement</Text>
           <View style={{ width: 40 }} />
@@ -315,7 +315,7 @@ export default function BankStatementScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>ð</Text>
+            <Text style={styles.emptyEmoji}>📊</Text>
             <Text style={styles.emptyTitle}>Upload Bank Statement</Text>
             <Text style={styles.emptyText}>
               Export your bank transactions as CSV (Date, Description, Amount) and upload here.
@@ -348,7 +348,7 @@ export default function BankStatementScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.summaryContainer}>
-          <Text style={styles.summaryEmoji}>â</Text>
+          <Text style={styles.summaryEmoji}>✅</Text>
           <Text style={styles.summaryTitle}>Import Complete!</Text>
           <Text style={styles.summaryText}>
             {importSummary.importedCount} of {importSummary.totalCount} transactions imported
@@ -377,7 +377,7 @@ export default function BankStatementScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>â</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Review Transactions</Text>
         <View style={{ width: 40 }} />
