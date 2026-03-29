@@ -2,7 +2,7 @@
  * Receipt Scanner Screen
  * Camera capture → Claude Vision → auto-log expense
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { useRouter } from 'expo-router';
 import { colors, typography, spacing, shadows, borderRadius } from '../constants/theme';
 import { useAIAssistant } from '../hooks/useAIAssistant';
 
-// We'll use expo-image-picker (lighter than camera for MVP)
+// We'll use expo-image-picker on native only
 let ImagePicker: any = null;
 try {
   ImagePicker = require('expo-image-picker');
@@ -33,73 +33,91 @@ export default function ReceiptScannerScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any>(null);
   const [scanError, setScanError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const pickImage = async (useCamera: boolean) => {
-    if (!ImagePicker) {
-      Alert.alert('Camera not available', 'expo-image-picker is required. Run: npx expo install expo-image-picker');
-      return;
-    }
+  // Web: handle file selected from native <input type="file">
+  const handleWebFileSelect = useCallback((event: any) => {
+    const file = event.target?.files?.[0];
+    if (!file) return;
 
-    try {
-      // On native, request permissions first. On web, skip — permissions
-      // are implicit and the async gap breaks Safari's user-gesture chain.
-      if (Platform.OS !== 'web') {
-        if (useCamera) {
-          const { status } = await ImagePicker.requestCameraPermissionsAsync();
-          if (status !== 'granted') {
-            Alert.alert('Permission needed', 'Camera permission is required to scan receipts.');
-            return;
-          }
-        } else {
-          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (status !== 'granted') {
-            Alert.alert('Permission needed', 'Photo library permission is required.');
-            return;
-          }
+    const objectUrl = URL.createObjectURL(file);
+    setImageUri(objectUrl);
+    setScanResult(null);
+    setScanError(null);
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const dataUrl = reader.result as string;
+      const b64 = dataUrl.split(',')[1];
+      if (b64) {
+        try {
+          setScanError(null);
+          const response = await sendReceipt(b64);
+          if (response) setScanResult(response);
+        } catch (err: any) {
+          setScanError(err.message || 'Failed to scan receipt');
         }
       }
+    };
+    reader.readAsDataURL(file);
+    if (event.target) event.target.value = '';
+  }, [sendReceipt]);
 
-      const options = {
-        mediaTypes: 'images' as const,
-        quality: 0.8,
-        base64: true,
-        // allowsEditing can block the callback on some web browsers
-        allowsEditing: Platform.OS !== 'web',
-      };
+  // Web: open native file picker via hidden input
+  const pickImageWeb = useCallback((useCamera: boolean) => {
+    if (useCamera) {
+      if (fileInputRef.current) {
+        fileInputRef.current.setAttribute('capture', 'environment');
+        fileInputRef.current.click();
+        fileInputRef.current.removeAttribute('capture');
+      }
+    } else {
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    }
+  }, []);
 
+  // Native: use expo-image-picker
+  const pickImageNative = async (useCamera: boolean) => {
+    if (!ImagePicker) {
+      Alert.alert('Camera not available', 'expo-image-picker is required.');
+      return;
+    }
+    try {
+      if (useCamera) {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Camera permission is required to scan receipts.');
+          return;
+        }
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Photo library permission is required.');
+          return;
+        }
+      }
       const result = useCamera
-        ? await ImagePicker.launchCameraAsync(options)
-        : await ImagePicker.launchImageLibraryAsync(options);
-
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8, base64: true, allowsEditing: true })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.8, base64: true, allowsEditing: true });
       if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
         setImageUri(asset.uri);
         setScanResult(null);
         setScanError(null);
-
-        // Auto-scan when image is selected
-        if (asset.base64) {
-          await handleScan(asset.base64);
-        } else if (Platform.OS === 'web' && asset.uri) {
-          // On web, base64 may not be returned — fetch it from the blob URI
-          try {
-            const response = await fetch(asset.uri);
-            const blob = await response.blob();
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-              const dataUrl = reader.result as string;
-              // Strip the data:image/...;base64, prefix
-              const b64 = dataUrl.split(',')[1];
-              if (b64) await handleScan(b64);
-            };
-            reader.readAsDataURL(blob);
-          } catch {
-            setScanError('Could not read the image. Please try another file.');
-          }
-        }
+        if (asset.base64) await handleScan(asset.base64);
       }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to capture image');
+    }
+  };
+
+  const pickImage = (useCamera: boolean) => {
+    if (Platform.OS === 'web') {
+      pickImageWeb(useCamera);
+    } else {
+      pickImageNative(useCamera);
     }
   };
 
@@ -123,6 +141,16 @@ export default function ReceiptScannerScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Hidden file input for web — works reliably in Safari */}
+      {Platform.OS === 'web' && (
+        <input
+          ref={fileInputRef as any}
+          type="file"
+          accept="image/*"
+          onChange={handleWebFileSelect}
+          style={{ display: 'none' }}
+        />
+      )}
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
