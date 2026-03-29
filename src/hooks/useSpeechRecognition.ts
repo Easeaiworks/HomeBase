@@ -65,6 +65,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSupported = Platform.OS === 'web' && getWebSpeechRecognition() !== null;
 
   // Clean up on unmount
@@ -76,6 +77,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
         } catch (_e) {
           // ignore
         }
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
       }
     };
   }, []);
@@ -103,6 +107,19 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
 
         let finalTranscript = '';
 
+        // Reset silence timer — auto-stops recognition after 2s of no new speech
+        const resetSilenceTimer = () => {
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = setTimeout(() => {
+            // No speech for 2 seconds after getting results — auto-stop
+            if (recognitionRef.current && finalTranscript.trim()) {
+              try {
+                recognitionRef.current.stop();
+              } catch (_e) { /* ignore */ }
+            }
+          }, 2000);
+        };
+
         recognition.onstart = () => {
           setIsListening(true);
           setError(null);
@@ -120,6 +137,8 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
             }
           }
           setInterimTranscript(interim);
+          // Reset the silence timer on every speech result
+          resetSilenceTimer();
         };
 
         recognition.onerror = (event: { error: string; message?: string }) => {
@@ -160,6 +179,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   }, []);
 
   const stopListening = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();

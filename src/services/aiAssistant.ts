@@ -1,11 +1,9 @@
 /**
  * AI Assistant Service
  * Handles communication with the ai-assistant Edge Function
+ * Uses supabase.functions.invoke() for automatic JWT refresh
  */
 import { supabase } from '../lib/supabase';
-
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://urimknobwngrsdfxnawe.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyaW1rbm9id25ncnNkZnhuYXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI2MzIsImV4cCI6MjA5MDI5ODYzMn0.m8qX02prvtFFQ0aL7pNWfsvpljeBKrY6UgA_ZUdwbwc';
 
 export interface AIMessage {
   role: 'user' | 'assistant';
@@ -35,28 +33,28 @@ export async function sendMessage(
   message: string,
   conversationHistory: AIMessage[] = []
 ): Promise<AIResponse> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Not authenticated');
-
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify({
-      message,
-      conversation_history: conversationHistory,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Network error' }));
-    throw new Error(error.error || `Request failed: ${response.status}`);
+  // Ensure we have a valid session (refreshes token automatically)
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !session) {
+    // Try refreshing explicitly
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) throw new Error('Not authenticated. Please sign in again.');
   }
 
-  return response.json();
+  const { data, error } = await supabase.functions.invoke('ai-assistant', {
+    body: {
+      message,
+      conversation_history: conversationHistory,
+    },
+  });
+
+  if (error) {
+    // FunctionsHttpError contains the response body
+    const errorMessage = error.message || 'Request failed';
+    throw new Error(errorMessage);
+  }
+
+  return data as AIResponse;
 }
 
 /**
@@ -66,26 +64,24 @@ export async function scanReceipt(
   imageBase64: string,
   message?: string
 ): Promise<AIResponse> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Not authenticated');
-
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify({
-      message: message || 'Please scan this receipt and extract the vendor, items, amounts, and total. Then log it as an expense.',
-      image_base64: imageBase64,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Network error' }));
-    throw new Error(error.error || `Request failed: ${response.status}`);
+  // Ensure we have a valid session (refreshes token automatically)
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !session) {
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) throw new Error('Not authenticated. Please sign in again.');
   }
 
-  return response.json();
+  const { data, error } = await supabase.functions.invoke('ai-assistant', {
+    body: {
+      message: message || 'Please scan this receipt and extract the vendor, items, amounts, and total. Then log it as an expense.',
+      image_base64: imageBase64,
+    },
+  });
+
+  if (error) {
+    const errorMessage = error.message || 'Failed to scan receipt';
+    throw new Error(errorMessage);
+  }
+
+  return data as AIResponse;
 }
