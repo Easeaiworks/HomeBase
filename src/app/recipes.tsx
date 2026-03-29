@@ -1,6 +1,7 @@
 /**
- * Recipes Browser Screen
- * Browse household recipes with search, add new recipes, and expand for details
+ * Recipes Screen
+ * "What's in your fridge?" ingredient-based recipe finder with AI suggestions,
+ * YouTube/Instagram video search, and saved recipe browsing
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -15,12 +16,12 @@ import {
   Alert,
   Linking,
   FlatList,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 import { colors, typography, spacing, borderRadius, shadows } from '../constants/theme';
 import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
@@ -29,56 +30,100 @@ interface Recipe {
   id: string;
   title: string;
   description: string | null;
-  ingredients: string;
-  instructions: string;
-  prep_time_min: number;
-  cook_time_min: number;
+  ingredients: any; // jsonb in DB
+  instructions: any; // jsonb in DB
+  prep_time_min: number | null;
+  cook_time_min: number | null;
   servings: number | null;
   tags: string[] | null;
   source_url: string | null;
+  image_url: string | null;
+  times_cooked: number;
+  rating: number | null;
   household_id: string | null;
   created_at: string;
 }
 
-// Recipe card for list view
-function RecipeCard({
-  recipe,
-  onPress,
-}: {
-  recipe: Recipe;
-  onPress: () => void;
-}) {
-  const totalTime = recipe.prep_time_min + recipe.cook_time_min;
+interface AISuggestion {
+  title: string;
+  description: string;
+  ingredients: string[];
+  instructions: string[];
+  prep_time: number;
+  cook_time: number;
+  servings: number;
+}
+
+// Parse ingredients/instructions from jsonb or string
+function parseList(data: any): string[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data.map(String);
+  if (typeof data === 'string') {
+    try { const parsed = JSON.parse(data); return Array.isArray(parsed) ? parsed.map(String) : [data]; }
+    catch { return data.split('\n').filter((s: string) => s.trim()); }
+  }
+  return [];
+}
+
+// ---- Ingredient Chip ----
+function IngredientChip({ name, onRemove }: { name: string; onRemove: () => void }) {
+  return (
+    <View style={styles.chip}>
+      <Text style={styles.chipText}>{name}</Text>
+      <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Text style={styles.chipRemove}>×</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ---- Video Link Button ----
+function VideoLink({ title, platform, onPress }: { title: string; platform: 'youtube' | 'instagram'; onPress: () => void }) {
+  const icon = platform === 'youtube' ? '▶️' : '📷';
+  const label = platform === 'youtube' ? 'YouTube' : 'Instagram';
+  const bg = platform === 'youtube' ? '#FF000015' : '#E1306C15';
+  const color = platform === 'youtube' ? '#FF0000' : '#E1306C';
+  return (
+    <TouchableOpacity style={[styles.videoLink, { backgroundColor: bg }]} onPress={onPress}>
+      <Text style={styles.videoIcon}>{icon}</Text>
+      <Text style={[styles.videoLabel, { color }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ---- Recipe Card ----
+function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () => void }) {
+  const totalTime = (recipe.prep_time_min || 0) + (recipe.cook_time_min || 0);
   const tags = recipe.tags || [];
 
   return (
     <TouchableOpacity style={styles.recipeCard} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardHeader}>
-        <View style={styles.cardTitle}>
-          <Text style={styles.recipeName} numberOfLines={2}>
-            {recipe.title}
-          </Text>
-          {recipe.description && (
-            <Text style={styles.recipeDescription} numberOfLines={1}>
-              {recipe.description}
-            </Text>
-          )}
-        </View>
+        <Text style={styles.recipeName} numberOfLines={2}>{recipe.title}</Text>
+        {recipe.description && (
+          <Text style={styles.recipeDescription} numberOfLines={1}>{recipe.description}</Text>
+        )}
       </View>
-
       <View style={styles.cardInfo}>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoIcon}>⏱️</Text>
-          <Text style={styles.infoText}>{totalTime} min</Text>
-        </View>
+        {totalTime > 0 && (
+          <View style={styles.infoItem}>
+            <Text style={styles.infoIcon}>⏱️</Text>
+            <Text style={styles.infoText}>{totalTime} min</Text>
+          </View>
+        )}
         {recipe.servings && (
           <View style={styles.infoItem}>
             <Text style={styles.infoIcon}>🍽️</Text>
             <Text style={styles.infoText}>{recipe.servings} servings</Text>
           </View>
         )}
+        {recipe.rating && (
+          <View style={styles.infoItem}>
+            <Text style={styles.infoIcon}>⭐</Text>
+            <Text style={styles.infoText}>{recipe.rating}</Text>
+          </View>
+        )}
       </View>
-
       {tags.length > 0 && (
         <View style={styles.tagsRow}>
           {tags.slice(0, 3).map((tag, idx) => (
@@ -86,65 +131,114 @@ function RecipeCard({
               <Text style={styles.tagText}>{tag}</Text>
             </View>
           ))}
-          {tags.length > 3 && (
-            <Text style={styles.moreTagsText}>+{tags.length - 3}</Text>
-          )}
         </View>
       )}
     </TouchableOpacity>
   );
 }
 
-// Expanded recipe detail modal
-function RecipeDetailModal({
-  recipe,
-  visible,
-  onClose,
-}: {
-  recipe: Recipe | null;
-  visible: boolean;
-  onClose: () => void;
+// ---- AI Suggestion Card ----
+function AISuggestionCard({ suggestion, onSave, onYouTube, onInstagram }: {
+  suggestion: AISuggestion;
+  onSave: () => void;
+  onYouTube: () => void;
+  onInstagram: () => void;
 }) {
-  if (!recipe) return null;
-
-  const totalTime = recipe.prep_time_min + recipe.cook_time_min;
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      onRequestClose={onClose}
-    >
+    <Card style={styles.suggestionCard}>
+      <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
+        <View style={styles.suggestionHeader}>
+          <Text style={styles.suggestionEmoji}>🍳</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.suggestionTitle}>{suggestion.title}</Text>
+            <Text style={styles.suggestionDesc} numberOfLines={expanded ? undefined : 2}>
+              {suggestion.description}
+            </Text>
+          </View>
+          <Text style={styles.expandIcon}>{expanded ? '▲' : '▼'}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Time badges */}
+      <View style={styles.timeBadges}>
+        <View style={styles.timeBadge}>
+          <Text style={styles.timeBadgeText}>⏱ {suggestion.prep_time + suggestion.cook_time} min</Text>
+        </View>
+        <View style={styles.timeBadge}>
+          <Text style={styles.timeBadgeText}>🍽 {suggestion.servings} servings</Text>
+        </View>
+      </View>
+
+      {expanded && (
+        <View style={styles.suggestionDetails}>
+          <Text style={styles.detailLabel}>Ingredients:</Text>
+          {suggestion.ingredients.map((ing, i) => (
+            <Text key={i} style={styles.detailItem}>• {ing}</Text>
+          ))}
+
+          <Text style={[styles.detailLabel, { marginTop: 12 }]}>Steps:</Text>
+          {suggestion.instructions.map((step, i) => (
+            <Text key={i} style={styles.detailItem}>{i + 1}. {step}</Text>
+          ))}
+        </View>
+      )}
+
+      {/* Action buttons: Save + Video links */}
+      <View style={styles.suggestionActions}>
+        <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
+          <Text style={styles.saveBtnText}>💾 Save Recipe</Text>
+        </TouchableOpacity>
+        <VideoLink title={suggestion.title} platform="youtube" onPress={onYouTube} />
+        <VideoLink title={suggestion.title} platform="instagram" onPress={onInstagram} />
+      </View>
+    </Card>
+  );
+}
+
+// ---- Recipe Detail Modal ----
+function RecipeDetailModal({ recipe, visible, onClose }: {
+  recipe: Recipe | null; visible: boolean; onClose: () => void;
+}) {
+  if (!recipe) return null;
+  const ingredients = parseList(recipe.ingredients);
+  const instructions = parseList(recipe.instructions);
+  const totalTime = (recipe.prep_time_min || 0) + (recipe.cook_time_min || 0);
+
+  const searchYouTube = () => {
+    const q = encodeURIComponent(recipe.title + ' recipe');
+    Linking.openURL('https://www.youtube.com/results?search_query=' + q);
+  };
+  const searchInstagram = () => {
+    const q = encodeURIComponent(recipe.title.replace(/\s+/g, ''));
+    Linking.openURL('https://www.instagram.com/explore/tags/' + q + 'recipe/');
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer} edges={['top']}>
-        {/* Modal header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeIcon}>✕</Text>
           </TouchableOpacity>
-          <Text style={styles.modalTitle} numberOfLines={1}>
-            {recipe.title}
-          </Text>
+          <Text style={styles.modalTitle} numberOfLines={1}>{recipe.title}</Text>
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView
-          style={styles.modalContent}
-          contentContainerStyle={styles.modalContentPadding}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalContentPadding} showsVerticalScrollIndicator={false}>
           {/* Quick info */}
           <View style={styles.quickInfo}>
             <View style={styles.quickInfoItem}>
               <Text style={styles.quickInfoIcon}>⏱️</Text>
               <Text style={styles.quickInfoLabel}>Prep</Text>
-              <Text style={styles.quickInfoValue}>{recipe.prep_time_min} min</Text>
+              <Text style={styles.quickInfoValue}>{recipe.prep_time_min || 0} min</Text>
             </View>
             <View style={styles.quickInfoDivider} />
             <View style={styles.quickInfoItem}>
               <Text style={styles.quickInfoIcon}>🍳</Text>
               <Text style={styles.quickInfoLabel}>Cook</Text>
-              <Text style={styles.quickInfoValue}>{recipe.cook_time_min} min</Text>
+              <Text style={styles.quickInfoValue}>{recipe.cook_time_min || 0} min</Text>
             </View>
             <View style={styles.quickInfoDivider} />
             <View style={styles.quickInfoItem}>
@@ -154,7 +248,6 @@ function RecipeDetailModal({
             </View>
           </View>
 
-          {/* Description */}
           {recipe.description && (
             <>
               <Text style={styles.sectionTitle}>About</Text>
@@ -162,48 +255,35 @@ function RecipeDetailModal({
             </>
           )}
 
-          {/* Tags */}
-          {recipe.tags && recipe.tags.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Tags</Text>
-              <View style={styles.allTagsRow}>
-                {recipe.tags.map((tag, idx) => (
-                  <View key={idx} style={styles.tagChipLarge}>
-                    <Text style={styles.tagTextLarge}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
+          {/* Video search links */}
+          <Text style={styles.sectionTitle}>Watch & Learn</Text>
+          <View style={styles.videoRow}>
+            <VideoLink title={recipe.title} platform="youtube" onPress={searchYouTube} />
+            <VideoLink title={recipe.title} platform="instagram" onPress={searchInstagram} />
+          </View>
 
           {/* Ingredients */}
           <Text style={styles.sectionTitle}>Ingredients</Text>
-          {recipe.ingredients.split('\n').map((ingredient, idx) => (
+          {ingredients.map((ing, idx) => (
             <View key={idx} style={styles.ingredientRow}>
               <Text style={styles.ingredientBullet}>•</Text>
-              <Text style={styles.ingredientText}>{ingredient.trim()}</Text>
+              <Text style={styles.ingredientText}>{ing}</Text>
             </View>
           ))}
 
           {/* Instructions */}
           <Text style={styles.sectionTitle}>Instructions</Text>
-          {recipe.instructions.split('\n').map((instruction, idx) => (
+          {instructions.map((step, idx) => (
             <View key={idx} style={styles.instructionRow}>
               <Text style={styles.instructionNumber}>{idx + 1}</Text>
-              <Text style={styles.instructionText}>{instruction.trim()}</Text>
+              <Text style={styles.instructionText}>{step}</Text>
             </View>
           ))}
 
-          {/* Source link */}
           {recipe.source_url && (
             <>
               <Text style={styles.sectionTitle}>Source</Text>
-              <Button
-                title="Open Source"
-                onPress={() => Linking.openURL(recipe.source_url!)}
-                variant="outline"
-                size="sm"
-              />
+              <Button title="Open Source" onPress={() => Linking.openURL(recipe.source_url!)} variant="outline" size="sm" />
             </>
           )}
 
@@ -214,277 +294,167 @@ function RecipeDetailModal({
   );
 }
 
-// Add recipe modal
-function AddRecipeModal({
-  visible,
-  onClose,
-  onAdd,
-  isLoading,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onAdd: (recipe: Omit<Recipe, 'id' | 'created_at' | 'household_id'>) => Promise<void>;
-  isLoading: boolean;
-}) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [ingredients, setIngredients] = useState('');
-  const [instructions, setInstructions] = useState('');
-  const [prepTime, setPrepTime] = useState('15');
-  const [cookTime, setCookTime] = useState('30');
-  const [servings, setServings] = useState('4');
-  const [tags, setTags] = useState('');
-  const [sourceUrl, setSourceUrl] = useState('');
-
-  const handleAdd = async () => {
-    if (!title.trim()) {
-      Alert.alert('Required', 'Please enter a recipe title');
-      return;
-    }
-    if (!ingredients.trim()) {
-      Alert.alert('Required', 'Please enter ingredients');
-      return;
-    }
-    if (!instructions.trim()) {
-      Alert.alert('Required', 'Please enter instructions');
-      return;
-    }
-
-    const tagArray = tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-
-    try {
-      await onAdd({
-        title: title.trim(),
-        description: description.trim() || null,
-        ingredients: ingredients.trim(),
-        instructions: instructions.trim(),
-        prep_time_min: parseInt(prepTime, 10) || 0,
-        cook_time_min: parseInt(cookTime, 10) || 0,
-        servings: servings.trim() ? parseInt(servings, 10) : null,
-        tags: tagArray.length > 0 ? tagArray : null,
-        source_url: sourceUrl.trim() || null,
-      });
-
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setIngredients('');
-      setInstructions('');
-      setPrepTime('15');
-      setCookTime('30');
-      setServings('4');
-      setTags('');
-      setSourceUrl('');
-      onClose();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to add recipe. Please try again.');
-    }
-  };
-
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.modalContainer} edges={['top']}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeIcon}>✕</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Add Recipe</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <ScrollView
-          style={styles.modalContent}
-          contentContainerStyle={styles.modalContentPadding}
-          showsVerticalScrollIndicator={false}
-        >
-          <Input
-            label="Recipe Title"
-            placeholder="e.g., Chocolate Chip Cookies"
-            value={title}
-            onChangeText={setTitle}
-            editable={!isLoading}
-          />
-
-          <Input
-            label="Description (Optional)"
-            placeholder="A brief description..."
-            value={description}
-            onChangeText={setDescription}
-            editable={!isLoading}
-          />
-
-          <View style={styles.timeRow}>
-            <View style={styles.timeInput}>
-              <Input
-                label="Prep Time (min)"
-                placeholder="15"
-                value={prepTime}
-                onChangeText={setPrepTime}
-                keyboardType="number-pad"
-                editable={!isLoading}
-              />
-            </View>
-            <View style={styles.timeInput}>
-              <Input
-                label="Cook Time (min)"
-                placeholder="30"
-                value={cookTime}
-                onChangeText={setCookTime}
-                keyboardType="number-pad"
-                editable={!isLoading}
-              />
-            </View>
-          </View>
-
-          <Input
-            label="Servings (Optional)"
-            placeholder="4"
-            value={servings}
-            onChangeText={setServings}
-            keyboardType="number-pad"
-            editable={!isLoading}
-          />
-
-          <View style={styles.largeInputContainer}>
-            <Text style={styles.label}>Ingredients</Text>
-            <TextInput
-              style={styles.largeInput}
-              placeholder="One per line (e.g., 2 cups flour)"
-              placeholderTextColor={colors.gray[400]}
-              value={ingredients}
-              onChangeText={setIngredients}
-              multiline
-              editable={!isLoading}
-              numberOfLines={6}
-            />
-          </View>
-
-          <View style={styles.largeInputContainer}>
-            <Text style={styles.label}>Instructions</Text>
-            <TextInput
-              style={styles.largeInput}
-              placeholder="One step per line"
-              placeholderTextColor={colors.gray[400]}
-              value={instructions}
-              onChangeText={setInstructions}
-              multiline
-              editable={!isLoading}
-              numberOfLines={8}
-            />
-          </View>
-
-          <Input
-            label="Tags (Optional)"
-            placeholder="Separated by commas (e.g., dessert, vegetarian)"
-            value={tags}
-            onChangeText={setTags}
-            editable={!isLoading}
-          />
-
-          <Input
-            label="Source URL (Optional)"
-            placeholder="https://example.com/recipe"
-            value={sourceUrl}
-            onChangeText={setSourceUrl}
-            editable={!isLoading}
-          />
-
-          <Button
-            title="Add Recipe"
-            onPress={handleAdd}
-            loading={isLoading}
-            style={styles.addButton}
-          />
-
-          <View style={{ height: 40 }} />
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
-}
-
+// ======== MAIN SCREEN ========
 export default function RecipesScreen() {
   const router = useRouter();
-  const { household } = useAuthStore();
+  const { household, member } = useAuthStore();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showRecipeDetail, setShowRecipeDetail] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
 
-  // Load recipes
+  // "What's in your fridge?" state
+  const [ingredientInput, setIngredientInput] = useState('');
+  const [myIngredients, setMyIngredients] = useState<string[]>([]);
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isSavingRecipe, setIsSavingRecipe] = useState(false);
+
+  // Load saved recipes
   useEffect(() => {
-    loadRecipes();
-  }, [household]);
+    if (household?.id) loadRecipes();
+  }, [household?.id]);
 
   const loadRecipes = async () => {
     if (!household) return;
-
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('recipes')
         .select('*')
-        .or(`household_id.eq.${household.id},household_id.is.null`)
+        .or('household_id.eq.' + household.id + ',household_id.is.null')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setRecipes((data || []) as Recipe[]);
-    } catch (error) {
-      console.error('Error loading recipes:', error);
-      Alert.alert('Error', 'Failed to load recipes');
+    } catch (err) {
+      console.error('Error loading recipes:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddRecipe = async (recipeData: Omit<Recipe, 'id' | 'created_at' | 'household_id'>) => {
-    setIsAdding(true);
+  // Add ingredient chip
+  const addIngredient = () => {
+    const trimmed = ingredientInput.trim().toLowerCase();
+    if (!trimmed) return;
+    if (myIngredients.includes(trimmed)) {
+      setIngredientInput('');
+      return;
+    }
+    setMyIngredients([...myIngredients, trimmed]);
+    setIngredientInput('');
+  };
+
+  const removeIngredient = (name: string) => {
+    setMyIngredients(myIngredients.filter((i) => i !== name));
+  };
+
+  // Ask AI for recipe suggestions based on ingredients
+  const askAiForRecipes = async () => {
+    if (myIngredients.length === 0) {
+      Alert.alert('Add Ingredients', 'Please add at least one ingredient to get recipe suggestions.');
+      return;
+    }
+
+    setIsAiLoading(true);
+    setAiSuggestions([]);
+
     try {
-      const { error } = await supabase.from('recipes').insert({
-        ...recipeData,
-        household_id: household?.id || null,
+      const prompt = 'I have these ingredients on hand: ' + myIngredients.join(', ') +
+        '. Suggest 3 recipes I can make. For each recipe, provide: title, description, ingredients list, step-by-step instructions, prep time in minutes, cook time in minutes, and servings. Return ONLY a JSON array of objects with keys: title, description, ingredients (array of strings), instructions (array of strings), prep_time (number), cook_time (number), servings (number). No markdown, no explanation, just the JSON array.';
+
+      const { data, error } = await supabase.functions.invoke('ai-assistant', {
+        body: {
+          message: prompt,
+          household_id: household?.id,
+          member_id: member?.id,
+          skip_tools: true,
+        },
       });
 
       if (error) throw error;
-      await loadRecipes();
-    } catch (error) {
-      console.error('Error adding recipe:', error);
-      throw error;
+
+      // Parse AI response - extract JSON from the response text
+      const responseText = typeof data === 'string' ? data : (data?.response || data?.text || JSON.stringify(data));
+      let suggestions: AISuggestion[] = [];
+
+      // Try to find JSON array in response
+      const jsonMatch = responseText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (jsonMatch) {
+        suggestions = JSON.parse(jsonMatch[0]);
+      } else {
+        // Try parsing the whole response as JSON
+        try {
+          const parsed = JSON.parse(responseText);
+          suggestions = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          // Fallback: show as a single suggestion
+          Alert.alert('AI Response', 'Got suggestions but couldn\'t parse them. Try asking HomeBase directly.');
+          router.push('/voice-assistant');
+          return;
+        }
+      }
+
+      setAiSuggestions(suggestions);
+    } catch (err: any) {
+      console.error('AI recipe error:', err);
+      Alert.alert('Error', err.message || 'Failed to get recipe suggestions. Try again.');
     } finally {
-      setIsAdding(false);
+      setIsAiLoading(false);
     }
   };
 
+  // Save AI suggestion to recipes table
+  const saveAiSuggestion = async (suggestion: AISuggestion) => {
+    if (!household?.id) return;
+    setIsSavingRecipe(true);
+    try {
+      const { error } = await supabase.from('recipes').insert({
+        household_id: household.id,
+        title: suggestion.title,
+        description: suggestion.description,
+        ingredients: suggestion.ingredients,
+        instructions: suggestion.instructions,
+        prep_time_min: suggestion.prep_time || 0,
+        cook_time_min: suggestion.cook_time || 0,
+        servings: suggestion.servings || 4,
+        tags: ['ai-suggested'],
+        times_cooked: 0,
+      });
+
+      if (error) throw error;
+      Alert.alert('Saved!', suggestion.title + ' has been added to your recipe collection.');
+      await loadRecipes();
+    } catch (err: any) {
+      Alert.alert('Error', 'Failed to save recipe: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsSavingRecipe(false);
+    }
+  };
+
+  // Open YouTube search for a recipe
+  const searchYouTube = (title: string) => {
+    const q = encodeURIComponent(title + ' recipe');
+    Linking.openURL('https://www.youtube.com/results?search_query=' + q);
+  };
+
+  // Open Instagram search for a recipe
+  const searchInstagram = (title: string) => {
+    const tag = encodeURIComponent(title.replace(/\s+/g, '').toLowerCase());
+    Linking.openURL('https://www.instagram.com/explore/tags/' + tag + 'recipe/');
+  };
+
   const filteredRecipes = recipes.filter((recipe) => {
-    const searchLower = searchText.toLowerCase();
+    if (!searchText) return true;
+    const s = searchText.toLowerCase();
     return (
-      recipe.title.toLowerCase().includes(searchLower) ||
-      recipe.description?.toLowerCase().includes(searchLower) ||
-      recipe.tags?.some((tag) => tag.toLowerCase().includes(searchLower))
+      recipe.title.toLowerCase().includes(s) ||
+      recipe.description?.toLowerCase().includes(s) ||
+      recipe.tags?.some((tag) => tag.toLowerCase().includes(s))
     );
   });
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.green[500]} />
-          <Text style={styles.loadingText}>Loading recipes...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -497,90 +467,144 @@ export default function RecipesScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Search bar */}
-      <View style={styles.searchSection}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search recipes..."
-          placeholderTextColor={colors.gray[400]}
-          value={searchText}
-          onChangeText={setSearchText}
-        />
-        <TouchableOpacity
-          style={styles.addRecipeButton}
-          onPress={() => setShowAddModal(true)}
-        >
-          <Text style={styles.addRecipeText}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-      {/* Suggest Recipe button */}
-      <TouchableOpacity
-        style={styles.suggestBanner}
-        onPress={() => router.push('/voice-assistant')}
-        activeOpacity={0.7}
-      >
-        <View style={styles.suggestContent}>
-          <Text style={styles.suggestEmoji}>🎤</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.suggestTitle}>Need a Recipe Idea?</Text>
-            <Text style={styles.suggestSubtitle}>Ask HomeBase for suggestions</Text>
+        {/* ---- What's in your fridge? ---- */}
+        <Card style={styles.fridgeCard}>
+          <View style={styles.fridgeHeader}>
+            <Text style={styles.fridgeEmoji}>🧊</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fridgeTitle}>What's in your fridge?</Text>
+              <Text style={styles.fridgeSubtitle}>Add ingredients and get recipe ideas</Text>
+            </View>
           </View>
-          <Text style={styles.suggestArrow}>→</Text>
+
+          {/* Ingredient input */}
+          <View style={styles.ingredientInputRow}>
+            <TextInput
+              style={styles.ingredientInput}
+              placeholder="Type an ingredient (e.g. chicken)"
+              placeholderTextColor={colors.gray[400]}
+              value={ingredientInput}
+              onChangeText={setIngredientInput}
+              onSubmitEditing={addIngredient}
+              returnKeyType="done"
+            />
+            <TouchableOpacity style={styles.addIngredientBtn} onPress={addIngredient}>
+              <Text style={styles.addIngredientText}>+</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Ingredient chips */}
+          {myIngredients.length > 0 && (
+            <View style={styles.chipsWrap}>
+              {myIngredients.map((name) => (
+                <IngredientChip key={name} name={name} onRemove={() => removeIngredient(name)} />
+              ))}
+            </View>
+          )}
+
+          {/* Quick add common items */}
+          {myIngredients.length === 0 && (
+            <View style={styles.quickAddRow}>
+              <Text style={styles.quickAddLabel}>Quick add:</Text>
+              {['chicken', 'rice', 'pasta', 'eggs', 'onion', 'garlic'].map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={styles.quickAddChip}
+                  onPress={() => setMyIngredients([...myIngredients, item])}
+                >
+                  <Text style={styles.quickAddText}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Find Recipes button */}
+          <Button
+            title={isAiLoading ? 'Finding recipes...' : '🍳 Find Recipes with These Ingredients'}
+            onPress={askAiForRecipes}
+            variant="primary"
+            loading={isAiLoading}
+            style={{ marginTop: 14 }}
+          />
+        </Card>
+
+        {/* ---- AI Suggestions ---- */}
+        {aiSuggestions.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>✨ AI Suggestions ({aiSuggestions.length})</Text>
+            {aiSuggestions.map((suggestion, idx) => (
+              <AISuggestionCard
+                key={idx}
+                suggestion={suggestion}
+                onSave={() => saveAiSuggestion(suggestion)}
+                onYouTube={() => searchYouTube(suggestion.title)}
+                onInstagram={() => searchInstagram(suggestion.title)}
+              />
+            ))}
+          </View>
+        )}
+
+        {isAiLoading && (
+          <View style={styles.aiLoadingWrap}>
+            <ActivityIndicator color={colors.green[500]} size="large" />
+            <Text style={styles.aiLoadingText}>Finding recipes based on your ingredients...</Text>
+          </View>
+        )}
+
+        {/* ---- Search saved recipes ---- */}
+        <View style={styles.section}>
+          <View style={styles.savedHeader}>
+            <Text style={styles.sectionHeader}>📚 My Recipes</Text>
+          </View>
+
+          <View style={styles.searchRow}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search saved recipes..."
+              placeholderTextColor={colors.gray[400]}
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+          </View>
+
+          {isLoading ? (
+            <ActivityIndicator color={colors.green[500]} style={{ marginTop: 20 }} />
+          ) : filteredRecipes.length > 0 ? (
+            filteredRecipes.map((recipe) => (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                onPress={() => {
+                  setSelectedRecipe(recipe);
+                  setShowRecipeDetail(true);
+                }}
+              />
+            ))
+          ) : (
+            <Card variant="outlined" style={styles.emptyCard}>
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>🍳</Text>
+                <Text style={styles.emptyTitle}>
+                  {searchText ? 'No recipes found' : 'No saved recipes yet'}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  {searchText ? 'Try a different search' : 'Use the ingredient finder above to discover and save recipes'}
+                </Text>
+              </View>
+            </Card>
+          )}
         </View>
-      </TouchableOpacity>
 
-      {/* Recipes list */}
-      {filteredRecipes.length > 0 ? (
-        <FlatList
-          data={filteredRecipes}
-          keyExtractor={(recipe) => recipe.id}
-          renderItem={({ item }) => (
-            <RecipeCard
-              recipe={item}
-              onPress={() => {
-                setSelectedRecipe(item);
-                setShowRecipeDetail(true);
-              }}
-            />
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <ScrollView contentContainerStyle={styles.emptyStateContainer}>
-          <Text style={styles.emptyEmoji}>🍳</Text>
-          <Text style={styles.emptyTitle}>
-            {searchText ? 'No recipes found' : 'No recipes yet'}
-          </Text>
-          <Text style={styles.emptySubtitle}>
-            {searchText
-              ? `Try searching for something else`
-              : `Add your first recipe or ask HomeBase for suggestions`}
-          </Text>
-          {!searchText && (
-            <Button
-              title="Add Recipe"
-              onPress={() => setShowAddModal(true)}
-              variant="primary"
-              size="md"
-              style={styles.emptyButton}
-            />
-          )}
-        </ScrollView>
-      )}
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
-      {/* Modals */}
+      {/* Recipe detail modal */}
       <RecipeDetailModal
         recipe={selectedRecipe}
         visible={showRecipeDetail}
         onClose={() => setShowRecipeDetail(false)}
-      />
-      <AddRecipeModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAdd={handleAddRecipe}
-        isLoading={isAdding}
       />
     </SafeAreaView>
   );
@@ -588,8 +612,7 @@ export default function RecipesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  loadingText: { ...typography.body, color: colors.gray[400] },
+  scrollContent: { padding: spacing.lg },
 
   header: {
     flexDirection: 'row',
@@ -603,56 +626,128 @@ const styles = StyleSheet.create({
   backText: { fontSize: 24, color: colors.gray[700] },
   headerTitle: { flex: 1, textAlign: 'center', ...typography.h2, color: colors.gray[900] },
 
-  searchSection: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
+  // ---- What's in your fridge ----
+  fridgeCard: {
+    marginBottom: 20,
+    backgroundColor: 'rgba(34,197,94,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.15)',
   },
-  searchInput: {
+  fridgeHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  fridgeEmoji: { fontSize: 32 },
+  fridgeTitle: { ...typography.h3, color: colors.gray[900] },
+  fridgeSubtitle: { ...typography.caption, color: colors.gray[500], marginTop: 2 },
+
+  ingredientInputRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  ingredientInput: {
     flex: 1,
     ...typography.body,
     color: colors.gray[900],
-    backgroundColor: 'rgba(255,255,255,0.70)',
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    borderColor: colors.gray[200],
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  addRecipeButton: {
+  addIngredientBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     backgroundColor: colors.green[500],
     justifyContent: 'center',
     alignItems: 'center',
+    ...shadows.sm,
   },
-  addRecipeText: { color: colors.white, fontSize: 24, fontWeight: '600' },
+  addIngredientText: { color: colors.white, fontSize: 22, fontWeight: '600' },
 
-  suggestBanner: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    backgroundColor: 'rgba(59,130,246,0.06)',
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.12)',
-    padding: spacing.md,
-  },
-  suggestContent: {
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    backgroundColor: colors.green[100],
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
   },
-  suggestEmoji: { fontSize: 24 },
-  suggestTitle: { ...typography.bodyBold, color: colors.blue[800] },
-  suggestSubtitle: { ...typography.caption, color: colors.blue[600], marginTop: 2 },
-  suggestArrow: { fontSize: 16, color: colors.blue[600] },
+  chipText: { ...typography.caption, color: colors.green[800], fontWeight: '600' },
+  chipRemove: { fontSize: 16, color: colors.green[600], fontWeight: '700' },
 
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+  quickAddRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
+  quickAddLabel: { ...typography.small, color: colors.gray[400] },
+  quickAddChip: {
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  quickAddText: { ...typography.small, color: colors.gray[600] },
+
+  // ---- AI Suggestions ----
+  section: { marginBottom: 20 },
+  sectionHeader: { ...typography.h3, color: colors.gray[900], marginBottom: 12 },
+
+  suggestionCard: { marginBottom: 12, borderWidth: 1, borderColor: 'rgba(59,130,246,0.12)' },
+  suggestionHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  suggestionEmoji: { fontSize: 24, marginTop: 2 },
+  suggestionTitle: { ...typography.bodyBold, color: colors.gray[900] },
+  suggestionDesc: { ...typography.caption, color: colors.gray[500], marginTop: 4, lineHeight: 18 },
+  expandIcon: { fontSize: 12, color: colors.gray[400], marginTop: 4 },
+
+  timeBadges: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  timeBadge: {
+    backgroundColor: colors.blue[50],
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  timeBadgeText: { ...typography.small, color: colors.blue[700] },
+
+  suggestionDetails: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.gray[100] },
+  detailLabel: { ...typography.bodyBold, color: colors.gray[700], marginBottom: 6 },
+  detailItem: { ...typography.body, color: colors.gray[600], marginBottom: 4, paddingLeft: 4 },
+
+  suggestionActions: { flexDirection: 'row', gap: 8, marginTop: 14, flexWrap: 'wrap' },
+  saveBtn: {
+    backgroundColor: colors.green[500],
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    ...shadows.sm,
+  },
+  saveBtnText: { ...typography.caption, color: colors.white, fontWeight: '700' },
+
+  videoLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+  },
+  videoIcon: { fontSize: 14 },
+  videoLabel: { ...typography.caption, fontWeight: '700' },
+  videoRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+
+  aiLoadingWrap: { alignItems: 'center', paddingVertical: 30, gap: 12 },
+  aiLoadingText: { ...typography.body, color: colors.gray[500] },
+
+  // ---- Saved Recipes ----
+  savedHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+  searchRow: { marginBottom: 12 },
+  searchInput: {
+    ...typography.body,
+    color: colors.gray[900],
+    backgroundColor: colors.glass.elevated,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.glass.border,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
 
   recipeCard: {
@@ -661,44 +756,28 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.60)',
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: 10,
     ...shadows.glass,
   },
-  cardHeader: {
-    marginBottom: spacing.sm,
-  },
-  cardTitle: { flex: 1 },
-  recipeName: { ...typography.bodyBold, color: colors.gray[900], marginBottom: 4, fontSize: 16 },
-  recipeDescription: { ...typography.caption, color: colors.gray[500], lineHeight: 18 },
+  cardHeader: { marginBottom: 8 },
+  recipeName: { ...typography.bodyBold, color: colors.gray[900], fontSize: 16 },
+  recipeDescription: { ...typography.caption, color: colors.gray[500], marginTop: 4 },
 
-  cardInfo: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
+  cardInfo: { flexDirection: 'row', gap: spacing.md, marginBottom: 8 },
+  infoItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   infoIcon: { fontSize: 14 },
   infoText: { ...typography.small, color: colors.gray[600] },
 
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tagChip: {
     backgroundColor: 'rgba(34,197,94,0.10)',
     borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   tagText: { ...typography.small, color: colors.green[700] },
-  moreTagsText: { ...typography.small, color: colors.gray[500], paddingHorizontal: 4 },
 
-  // Modal styles
+  // ---- Modal ----
   modalContainer: { flex: 1, backgroundColor: colors.background },
   modalHeader: {
     flexDirection: 'row',
@@ -711,9 +790,8 @@ const styles = StyleSheet.create({
   closeButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   closeIcon: { fontSize: 24, color: colors.gray[700], fontWeight: '600' },
   modalTitle: { flex: 1, textAlign: 'center', ...typography.h2, color: colors.gray[900] },
-
   modalContent: { flex: 1 },
-  modalContentPadding: { padding: spacing.lg, paddingBottom: spacing.xl },
+  modalContentPadding: { padding: spacing.lg },
 
   quickInfo: {
     flexDirection: 'row',
@@ -721,84 +799,36 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.blue[200],
-    marginBottom: spacing.xl,
-    overflow: 'hidden',
+    marginBottom: 20,
   },
-  quickInfoItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-  },
+  quickInfoItem: { flex: 1, alignItems: 'center', paddingVertical: spacing.md },
   quickInfoIcon: { fontSize: 20, marginBottom: 4 },
   quickInfoLabel: { ...typography.caption, color: colors.gray[600] },
   quickInfoValue: { ...typography.bodyBold, color: colors.blue[700], marginTop: 2 },
-  quickInfoDivider: {
-    width: 1,
-    backgroundColor: colors.blue[200],
-  },
+  quickInfoDivider: { width: 1, backgroundColor: colors.blue[200] },
 
-  sectionTitle: { ...typography.bodyBold, color: colors.gray[900], marginBottom: spacing.sm, marginTop: spacing.lg },
-  descriptionText: { ...typography.body, color: colors.gray[600], marginBottom: spacing.lg },
+  sectionTitle: { ...typography.bodyBold, color: colors.gray[900], marginBottom: 8, marginTop: 16 },
+  descriptionText: { ...typography.body, color: colors.gray[600], marginBottom: 16 },
 
-  allTagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  tagChipLarge: {
-    backgroundColor: colors.green[100],
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  tagTextLarge: { ...typography.body, color: colors.green[700] },
-
-  ingredientRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  ingredientRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
   ingredientBullet: { ...typography.body, color: colors.gray[400], width: 16 },
   ingredientText: { ...typography.body, color: colors.gray[700], flex: 1 },
 
   instructionRow: {
     flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-    paddingBottom: spacing.md,
+    gap: 12,
+    marginBottom: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[100],
   },
-  instructionNumber: {
-    ...typography.bodyBold,
-    color: colors.green[600],
-    minWidth: 28,
-    textAlign: 'center',
-  },
+  instructionNumber: { ...typography.bodyBold, color: colors.green[600], minWidth: 28, textAlign: 'center' },
   instructionText: { ...typography.body, color: colors.gray[700], flex: 1, lineHeight: 22 },
 
-  // Add recipe form
-  label: { ...typography.bodyBold, color: colors.gray[700], marginBottom: spacing.sm },
-  timeRow: { flexDirection: 'row', gap: spacing.md },
-  timeInput: { flex: 1 },
-
-  largeInputContainer: { marginBottom: spacing.lg },
-  largeInput: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.gray[200],
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    ...typography.body,
-    color: colors.gray[900],
-    textAlignVertical: 'top',
-  },
-
-  addButton: { marginTop: spacing.lg },
-
-  // Empty state
-  emptyStateContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
-  emptyEmoji: { fontSize: 48, marginBottom: spacing.lg },
-  emptyTitle: { ...typography.h2, color: colors.gray[900], textAlign: 'center', marginBottom: spacing.sm },
-  emptySubtitle: { ...typography.body, color: colors.gray[500], textAlign: 'center', marginBottom: spacing.xl },
-  emptyButton: { marginTop: spacing.lg },
+  // ---- Empty state ----
+  emptyCard: { marginTop: 8 },
+  emptyState: { alignItems: 'center', paddingVertical: 24 },
+  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+  emptyTitle: { ...typography.h3, color: colors.gray[900], textAlign: 'center', marginBottom: 6 },
+  emptySubtitle: { ...typography.body, color: colors.gray[500], textAlign: 'center' },
 });
