@@ -5,15 +5,15 @@ import { colors, shadows, borderRadius } from '../../constants/theme';
 
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const icons: Record<string, string> = {
-    home: 'ð ',
-    calendar: 'ð',
-    lists: 'ð',
-    more: 'âï¸',
+    home: '🏠',
+    calendar: '📅',
+    lists: '🛒',
+    more: '⚙️',
   };
 
   return (
     <View style={[styles.tabIcon, focused && styles.tabIconActive]}>
-      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || 'ð±'}</Text>
+      <Text style={[styles.emoji, focused && styles.emojiActive]}>{icons[name] || '📱'}</Text>
     </View>
   );
 }
@@ -57,7 +57,7 @@ export default function TabLayout() {
                 onPress={() => router.push('/voice-assistant')}
               >
                 <View style={styles.voiceCenterInner}>
-                  <Text style={styles.voiceCenterEmoji}>ðï¸</Text>
+                  <Text style={styles.voiceCenterEmoji}>🎙️</Text>
                 </View>
                 <Text style={styles.voiceCenterLabel}>Ask</Text>
               </TouchableOpacity>
