@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, shadows } from '../../constants/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
         {/* Logo area */}
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoEmoji}>🏠</Text>
+            <Text style={styles.logoEmoji}>ð </Text>
           </View>
           <Text style={styles.appName}>HomeBase</Text>
           <Text style={styles.tagline}>
@@ -26,10 +26,10 @@ export default function WelcomeScreen() {
         {/* Feature highlights */}
         <View style={styles.features}>
           {[
-            { icon: '🗣️', text: 'Voice-powered scheduling' },
-            { icon: '💰', text: 'Smart expense tracking' },
-            { icon: '🛒', text: 'Grocery lists with deals' },
-            { icon: '🍳', text: 'Recipe suggestions' },
+            { icon: 'ð£ï¸', text: 'Voice-powered scheduling' },
+            { icon: 'ð°', text: 'Smart expense tracking' },
+            { icon: 'ð', text: 'Grocery lists with deals' },
+            { icon: 'ð³', text: 'Recipe suggestions' },
           ].map((feature, i) => (
             <View key={i} style={styles.featureRow}>
               <Text style={styles.featureIcon}>{feature.icon}</Text>

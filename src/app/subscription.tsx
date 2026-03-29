@@ -1,6 +1,6 @@
 /**
  * Subscription / Paywall Screen
- * Shows when trial expires — user must pick a plan to continue.
+ * Shows when trial expires â user must pick a plan to continue.
  * Handles Stripe checkout for web, App Store / Google Play for native.
  */
 import React, { useState } from 'react';
@@ -20,7 +20,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
-import { colors, typography, spacing } from '../constants/theme';
+import { colors, typography, spacing, shadows } from '../constants/theme';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://urimknobwngrsdfxnawe.supabase.co';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyaW1rbm9id25ncnNkZnhuYXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI2MzIsImV4cCI6MjA5MDI5ODYzMn0.m8qX02prvtFFQ0aL7pNWfsvpljeBKrY6UgA_ZUdwbwc';
@@ -132,7 +132,7 @@ export default function SubscriptionScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerEmoji}>
-            {isTrialActive ? '⏰' : '🔒'}
+            {isTrialActive ? 'â°' : 'ð'}
           </Text>
           <Text style={styles.title}>
             {isTrialActive
@@ -204,7 +204,7 @@ export default function SubscriptionScreen() {
                 <View style={styles.featureList}>
                   {plan.features.map((f, i) => (
                     <View key={i} style={styles.featureRow}>
-                      <Text style={styles.checkmark}>✓</Text>
+                      <Text style={styles.checkmark}>â</Text>
                       <Text style={styles.featureText}>{f}</Text>
                     </View>
                   ))}
