@@ -23,6 +23,7 @@ import { supabase } from '../lib/supabase';
 import { colors, typography, spacing } from '../constants/theme';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://urimknobwngrsdfxnawe.supabase.co';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyaW1rbm9id25ncnNkZnhuYXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI2MzIsImV4cCI6MjA5MDI5ODYzMn0.m8qX02prvtFFQ0aL7pNWfsvpljeBKrY6UgA_ZUdwbwc';
 
 interface PlanOption {
   id: string;
@@ -93,6 +94,7 @@ export default function SubscriptionScreen() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
+          'apikey': SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           plan: selectedPlan,

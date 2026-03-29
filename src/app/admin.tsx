@@ -32,6 +32,8 @@ import {
   forcePasswordChange,
   sendPasswordReset,
   getAdminLog,
+  extendTrial,
+  toggleBillingExempt,
 } from '../services/adminService';
 
 interface AdminUser {
@@ -90,6 +92,8 @@ function UserCard({
   onToggle2FA,
   onPasswordReset,
   onSendResetEmail,
+  onExtendTrial,
+  onToggleBillingExempt,
 }: {
   user: AdminUser;
   onApprove: () => void;
@@ -98,6 +102,8 @@ function UserCard({
   onToggle2FA: () => void;
   onPasswordReset: () => void;
   onSendResetEmail: () => void;
+  onExtendTrial: () => void;
+  onToggleBillingExempt: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const status = STATUS_COLORS[user.approval_status] || STATUS_COLORS.pending;
@@ -171,6 +177,20 @@ function UserCard({
               {(user.households as any)?.subscription_status || 'free'}
             </Text>
           </View>
+          <View style={styles.userDetail}>
+            <Text style={styles.detailLabel}>Trial Expires</Text>
+            <Text style={styles.detailValue}>
+              {(user.households as any)?.trial_expires_at
+                ? new Date((user.households as any).trial_expires_at).toLocaleDateString()
+                : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.userDetail}>
+            <Text style={styles.detailLabel}>Billing Exempt</Text>
+            <Text style={[styles.detailValue, (user.households as any)?.is_billing_exempt && { color: colors.green[600] }]}>
+              {(user.households as any)?.is_billing_exempt ? 'Yes (free forever)' : 'No'}
+            </Text>
+          </View>
 
           <View style={styles.actionButtons}>
             {user.approval_status !== 'approved' && (
@@ -193,6 +213,17 @@ function UserCard({
             </TouchableOpacity>
             <TouchableOpacity style={styles.resetBtn} onPress={onSendResetEmail}>
               <Text style={styles.resetBtnText}>Send Reset Email</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.trialBtn} onPress={onExtendTrial}>
+              <Text style={styles.trialBtnText}>Extend Trial +7 Days</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exemptBtn, (user.households as any)?.is_billing_exempt && styles.exemptBtnActive]}
+              onPress={onToggleBillingExempt}
+            >
+              <Text style={[styles.exemptBtnText, (user.households as any)?.is_billing_exempt && styles.exemptBtnTextActive]}>
+                {(user.households as any)?.is_billing_exempt ? 'Remove Free Pass' : 'Grant Free Pass'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -378,6 +409,8 @@ export default function AdminScreen() {
               }}
               onPasswordReset={() => handleAction(() => forcePasswordChange(user.id), 'Force Password Change', user.display_name)}
               onSendResetEmail={() => handleAction(() => sendPasswordReset(user.id), 'Send Password Reset', user.display_name)}
+              onExtendTrial={() => handleAction(() => extendTrial(user.id, 7), 'Extend Trial (+7 days)', user.display_name)}
+              onToggleBillingExempt={() => handleAction(() => toggleBillingExempt(user.id), 'Toggle Billing Exemption', user.display_name)}
             />
           ))
         )}
@@ -546,6 +579,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 14,
   },
   resetBtnText: { ...typography.small, color: colors.gray[700], fontWeight: '600' },
+  trialBtn: {
+    backgroundColor: colors.blue[50], borderRadius: borderRadius.md,
+    paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.blue[200],
+  },
+  trialBtnText: { ...typography.small, color: colors.blue[700], fontWeight: '600' },
+  exemptBtn: {
+    backgroundColor: colors.green[50], borderRadius: borderRadius.md,
+    paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.green[200],
+  },
+  exemptBtnActive: { backgroundColor: colors.error, borderColor: colors.error },
+  exemptBtnText: { ...typography.small, color: colors.green[700], fontWeight: '600' },
+  exemptBtnTextActive: { color: colors.white },
 
   // Empty state
   emptyState: { alignItems: 'center', paddingVertical: 20 },

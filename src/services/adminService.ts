@@ -5,6 +5,7 @@
 import { supabase } from '../lib/supabase';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://urimknobwngrsdfxnawe.supabase.co';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyaW1rbm9id25ncnNkZnhuYXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI2MzIsImV4cCI6MjA5MDI5ODYzMn0.m8qX02prvtFFQ0aL7pNWfsvpljeBKrY6UgA_ZUdwbwc';
 
 async function adminRequest(action: string, params: Record<string, any> = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -15,6 +16,7 @@ async function adminRequest(action: string, params: Record<string, any> = {}) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({ action, ...params }),
   });
@@ -70,6 +72,14 @@ export async function toggleSuperAdmin(memberId: string, enable: boolean) {
 
 export async function getAdminLog() {
   return adminRequest('get_admin_log');
+}
+
+export async function extendTrial(memberId: string, days: number = 7) {
+  return adminRequest('extend_trial', { member_id: memberId, days });
+}
+
+export async function toggleBillingExempt(memberId: string) {
+  return adminRequest('toggle_billing_exempt', { member_id: memberId });
 }
 
 // ===== Parent APIs =====

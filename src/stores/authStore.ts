@@ -26,6 +26,7 @@ interface Household {
   trial_expires_at: string | null;
   subscription_current_period_end: string | null;
   stripe_customer_id: string | null;
+  is_billing_exempt: boolean;
 }
 
 interface AuthState {
@@ -106,9 +107,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const subStatus = h?.subscription_status || 'trial';
         const trialExpiresAt = h?.trial_expires_at || null;
         const trialDays = calcTrialDays(trialExpiresAt);
+        const billingExempt = h?.is_billing_exempt || false;
         const isTrialActive = subStatus === 'trial' && trialDays > 0;
-        const isTrialExpired = subStatus === 'trial' && trialDays <= 0;
-        const isSubscribed = subStatus === 'active';
+        const isTrialExpired = subStatus === 'trial' && trialDays <= 0 && !billingExempt;
+        const isSubscribed = subStatus === 'active' || billingExempt;
 
         set({
           member: {
@@ -134,6 +136,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 trial_expires_at: trialExpiresAt,
                 subscription_current_period_end: h.subscription_current_period_end || null,
                 stripe_customer_id: h.stripe_customer_id || null,
+                is_billing_exempt: h.is_billing_exempt || false,
               }
             : null,
           isOnboarded: true,

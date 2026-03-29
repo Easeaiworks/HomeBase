@@ -5,6 +5,7 @@
 import { supabase } from '../lib/supabase';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://urimknobwngrsdfxnawe.supabase.co';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyaW1rbm9id25ncnNkZnhuYXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI2MzIsImV4cCI6MjA5MDI5ODYzMn0.m8qX02prvtFFQ0aL7pNWfsvpljeBKrY6UgA_ZUdwbwc';
 
 export interface AIMessage {
   role: 'user' | 'assistant';
@@ -42,6 +43,7 @@ export async function sendMessage(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({
       message,
@@ -72,6 +74,7 @@ export async function scanReceipt(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({
       message: message || 'Please scan this receipt and extract the vendor, items, amounts, and total. Then log it as an expense.',
