@@ -31,7 +31,7 @@ const GRID_PADDING = spacing.lg;
 const GRID_COLS = 3;
 const GRID_ITEM_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Category Grid Icon Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// âââ Category Grid Icon âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function CategoryIcon({ emoji, label, onPress, color }: {
   emoji: string; label: string; onPress: () => void; color: string;
 }) {
@@ -50,7 +50,7 @@ function CategoryIcon({ emoji, label, onPress, color }: {
   );
 }
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Section Card Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// âââ Section Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function SectionCard({ title, emoji, onPress, children, rightLabel }: {
   title: string; emoji: string; onPress?: () => void; children: React.ReactNode; rightLabel?: string;
 }) {
@@ -113,29 +113,29 @@ export default function HomeScreen() {
     return 'Good evening';
   };
 
-  // ââ Header Image Upload âââââââââââââââââââââââââ
+
+  // ── Header Image Upload ─────────────────────────
   const pickHeaderImage = useCallback(async () => {
     if (!household?.id) return;
 
     if (Platform.OS === 'web') {
       // Web: use file input
-      const input = document.createElement('input');
+      const doc = typeof document !== 'undefined' ? document : null;
+      if (!doc) return;
+      const input = doc.createElement('input') as any;
       input.type = 'file';
       input.accept = 'image/jpeg,image/png,image/webp';
       input.onchange = async (e: any) => {
         const file = e.target?.files?.[0];
         if (!file) return;
-        // Compress before upload
-        try {
-          const compressed = await compressImageWeb(file);
-          await uploadHeaderImage(compressed);
-        } catch {
-          await uploadHeaderImage(file);
+        if (file.size > 2 * 1024 * 1024) {
+          Alert.alert('Too Large', 'Please choose an image under 2MB.');
+          return;
         }
+        await uploadHeaderImage(file);
       };
       input.click();
     } else {
-      // Native: use expo-image-picker
       try {
         const ImagePicker = require('expo-image-picker');
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -151,13 +151,12 @@ export default function HomeScreen() {
         });
         if (!result.canceled && result.assets[0]) {
           const uri = result.assets[0].uri;
-          const response = await fetch(uri);
-          const blob = await response.blob();
+          const resp = await fetch(uri);
+          const blob = await resp.blob();
           await uploadHeaderImage(blob);
         }
       } catch (err) {
         console.error('Image picker error:', err);
-        Alert.alert('Error', 'Could not open image picker.');
       }
     }
   }, [household?.id]);
@@ -165,33 +164,22 @@ export default function HomeScreen() {
   const uploadHeaderImage = useCallback(async (file: Blob | File) => {
     if (!household?.id) return;
     setUploadingImage(true);
-
     try {
-      const ext = file.type?.includes('png') ? 'png' : file.type?.includes('webp') ? 'webp' : 'jpg';
-      const filePath = `${household.id}/header.${ext}`;
-
-      // Upload to Supabase Storage
+      const ext = (file as any).type?.includes('png') ? 'png' : 'jpg';
+      const filePath = household.id + '/header.' + ext;
       const { error: uploadError } = await supabase.storage
         .from('header-images')
-        .upload(filePath, file, { upsert: true, contentType: file.type || 'image/jpeg' });
-
+        .upload(filePath, file, { upsert: true, contentType: (file as any).type || 'image/jpeg' });
       if (uploadError) throw uploadError;
-
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('header-images')
         .getPublicUrl(filePath);
-
       const publicUrl = urlData.publicUrl + '?t=' + Date.now();
-
-      // Update household record
       const { error: updateError } = await supabase
         .from('households')
         .update({ header_image_url: publicUrl })
         .eq('id', household.id);
-
       if (updateError) throw updateError;
-
       setHeaderImageUrl(publicUrl);
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -292,7 +280,8 @@ export default function HomeScreen() {
   const budgetRemaining = totalBudget - totalSpent;
   const budgetPct = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
   const budgetColor = budgetPct > 90 ? colors.error : budgetPct > 70 ? colors.warning : colors.green[500];
-  const categoryEmoji: Record<string, string> = { home: 'Ã°ÂÂÂ ', vehicle: 'Ã°ÂÂÂ', pet: 'Ã°ÂÂÂ¾', appliance: 'Ã°ÂÂÂ§' };
+  const categoryEmoji: Record<string, string> = { home: 'ð ', vehicle: 'ð', pet: 'ð¾', appliance: 'ð§' };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -300,7 +289,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ââ Hero Section with Optional Background Image ââ */}
+        {/* Hero Section with Optional Background Image */}
         {headerImageUrl ? (
           <ImageBackground
             source={{ uri: headerImageUrl }}
@@ -323,27 +312,19 @@ export default function HomeScreen() {
               {household && (
                 <View style={styles.heroBottomRow}>
                   <View style={styles.householdPill}>
-                    <Text style={styles.householdIcon}>ð¡</Text>
+                    <Text style={styles.householdIcon}>{String.fromCodePoint(0x1F3E1)}</Text>
                     <Text style={styles.householdName}>{household.name}</Text>
                   </View>
                   <View style={styles.headerImageActions}>
-                    <TouchableOpacity
-                      style={styles.cameraBtn}
-                      onPress={pickHeaderImage}
-                      activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.cameraBtn} onPress={pickHeaderImage}>
                       {uploadingImage ? (
                         <ActivityIndicator size="small" color="#fff" />
                       ) : (
-                        <Text style={styles.cameraBtnIcon}>ð·</Text>
+                        <Text style={styles.cameraBtnIcon}>{String.fromCodePoint(0x1F4F7)}</Text>
                       )}
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.cameraBtn}
-                      onPress={removeHeaderImage}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.cameraBtnIcon}>â</Text>
+                    <TouchableOpacity style={styles.cameraBtn} onPress={removeHeaderImage}>
+                      <Text style={styles.cameraBtnText}>{String.fromCodePoint(0x2715)}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -367,18 +348,14 @@ export default function HomeScreen() {
               {household && (
                 <View style={styles.heroBottomRow}>
                   <View style={styles.householdPill}>
-                    <Text style={styles.householdIcon}>ð¡</Text>
+                    <Text style={styles.householdIcon}>{String.fromCodePoint(0x1F3E1)}</Text>
                     <Text style={styles.householdName}>{household.name}</Text>
                   </View>
-                  <TouchableOpacity
-                    style={styles.cameraBtn}
-                    onPress={pickHeaderImage}
-                    activeOpacity={0.7}
-                  >
+                  <TouchableOpacity style={styles.cameraBtn} onPress={pickHeaderImage}>
                     {uploadingImage ? (
                       <ActivityIndicator size="small" color="#fff" />
                     ) : (
-                      <Text style={styles.cameraBtnIcon}>ð·</Text>
+                      <Text style={styles.cameraBtnIcon}>{String.fromCodePoint(0x1F4F7)}</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -386,58 +363,58 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-
-        {/* Ã¢ÂÂÃ¢ÂÂ Trial Banner Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
+        {/* ââ Trial Banner ââââââââââââââââââââââ */}
         {isTrialActive && !isSubscribed && (
-          <PressableScale
+          <TouchableOpacity
             style={styles.trialBanner}
             onPress={() => router.push('/subscription')}
-            activeScale={0.98}
-            glowColor="#3B82F6"
+            activeOpacity={0.8}
           >
             <Text style={styles.trialText}>
               {trialDaysRemaining <= 3
-                ? 'Ã¢ÂÂ Ã¯Â¸Â Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' Ã¢ÂÂ Upgrade now'
-                : 'Ã¢ÂÂ¨ Free trial: ' + trialDaysRemaining + ' days remaining'}
+                ? 'â ï¸ Trial ends in ' + trialDaysRemaining + ' day' + (trialDaysRemaining !== 1 ? 's' : '') + ' â Upgrade now'
+                : 'â¨ Free trial: ' + trialDaysRemaining + ' days remaining'}
             </Text>
-          </PressableScale>
+          </TouchableOpacity>
         )}
 
-        {/* Ã¢ÂÂÃ¢ÂÂ Search + Ask Bar Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
+        {/* ââ Search + Ask Bar ââââââââââââââââââ */}
         <View style={styles.searchRow}>
-          <TouchableOpacity
+          <PressableScale
             style={styles.searchBar}
             onPress={() => router.push('/voice-assistant')}
-            activeOpacity={0.7}
+            activeScale={0.98}
+            glowColor="#9CA3AF"
           >
-            <Text style={styles.searchIcon}>Ã°ÂÂÂ</Text>
+            <Text style={styles.searchIcon}>ð</Text>
             <Text style={styles.searchPlaceholder}>Search HomeBase...</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </PressableScale>
+          <PressableScale
             style={styles.askButton}
             onPress={() => router.push('/voice-assistant')}
-            activeOpacity={0.7}
+            activeScale={0.93}
+            glowColor="#22C55E"
           >
-            <Text style={styles.askIcon}>Ã°ÂÂÂ£Ã¯Â¸Â</Text>
+            <Text style={styles.askIcon}>ð£ï¸</Text>
             <Text style={styles.askLabel}>Ask</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
-        {/* Ã¢ÂÂÃ¢ÂÂ Category Grid (2 rows ÃÂ 3 cols) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
+        {/* ââ Category Grid (2 rows Ã 3 cols) ââââââ */}
         <View style={styles.categoryGrid}>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="Ã°ÂÂÂ" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
-            <CategoryIcon emoji="Ã°ÂÂÂ°" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
-            <CategoryIcon emoji="Ã°ÂÂÂ" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
+            <CategoryIcon emoji="ð" label="Calendar" color={colors.blue[50]} onPress={() => router.push('/(tabs)/calendar')} />
+            <CategoryIcon emoji="ð°" label="Expenses" color={colors.green[50]} onPress={() => router.push('/(tabs)/expenses')} />
+            <CategoryIcon emoji="ð" label="Groceries" color={colors.teal[50]} onPress={() => router.push('/(tabs)/lists')} />
           </View>
           <View style={styles.categoryRow}>
-            <CategoryIcon emoji="Ã°ÂÂÂ³" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
-            <CategoryIcon emoji="Ã°ÂÂÂ§" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
-            <CategoryIcon emoji="Ã°ÂÂÂ¸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
+            <CategoryIcon emoji="ð³" label="Recipes" color="#FFF7ED" onPress={() => router.push('/recipes')} />
+            <CategoryIcon emoji="ð§" label="Maintenance" color={colors.gray[50]} onPress={() => router.push('/maintenance')} />
+            <CategoryIcon emoji="ð¸" label="Receipts" color="#FDF2F8" onPress={() => router.push('/receipt-scanner')} />
           </View>
         </View>
 
-        {/* Ã¢ÂÂÃ¢ÂÂ Dashboard Cards Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
+        {/* ââ Dashboard Cards âââââââââââââââââââââ */}
         {isLoading ? (
           <ActivityIndicator color={colors.green[500]} style={{ marginTop: 24 }} />
         ) : (
@@ -445,7 +422,7 @@ export default function HomeScreen() {
             {/* Today's Schedule */}
             <SectionCard
               title="Today's Schedule"
-              emoji="Ã°ÂÂÂ"
+              emoji="ð"
               onPress={() => router.push('/(tabs)/calendar')}
             >
               {todayEvents.length > 0 ? (
@@ -459,7 +436,7 @@ export default function HomeScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.eventName}>{event.title}</Text>
                       {event.location && (
-                        <Text style={styles.eventLoc}>Ã°ÂÂÂ {event.location}</Text>
+                        <Text style={styles.eventLoc}>ð {event.location}</Text>
                       )}
                     </View>
                   </View>
@@ -475,7 +452,7 @@ export default function HomeScreen() {
             {/* Budget Snapshot */}
             <SectionCard
               title="This Month"
-              emoji="Ã°ÂÂÂ°"
+              emoji="ð°"
               onPress={() => router.push('/(tabs)/expenses')}
             >
               <View style={styles.budgetRow}>
@@ -508,7 +485,7 @@ export default function HomeScreen() {
             {/* Grocery List */}
             <SectionCard
               title="Grocery List"
-              emoji="Ã°ÂÂÂ"
+              emoji="ð"
               onPress={() => router.push('/(tabs)/lists')}
               rightLabel={groceryCount > 0 ? groceryCount + ' items' : undefined}
             >
@@ -535,7 +512,7 @@ export default function HomeScreen() {
             {/* Upcoming Maintenance */}
             <SectionCard
               title="Maintenance"
-              emoji="Ã°ÂÂÂ§"
+              emoji="ð§"
               onPress={() => router.push('/maintenance')}
             >
               {maintenance.length > 0 ? (
@@ -552,7 +529,7 @@ export default function HomeScreen() {
                           </Text>
                         )}
                       </View>
-                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || 'Ã°ÂÂÂ§'}</Text>
+                      <Text style={styles.maintCatEmoji}>{categoryEmoji[item.category] || 'ð§'}</Text>
                     </View>
                   );
                 })
@@ -565,27 +542,27 @@ export default function HomeScreen() {
             </SectionCard>
 
             {/* Quick Tips */}
-            <SectionCard title="Quick Tips" emoji="Ã°ÂÂÂ¡">
+            <SectionCard title="Quick Tips" emoji="ð¡">
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>Ã°ÂÂÂ</Text>
+                  <Text style={styles.tipIcon}>ð</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Guides</Text>
                   <Text style={styles.tipDesc}>Tips for managing your home</Text>
                 </View>
-                <Text style={styles.tipArrow}>Ã¢ÂÂº</Text>
+                <Text style={styles.tipArrow}>âº</Text>
               </View>
               <View style={styles.tipDivider} />
               <View style={styles.tipRow}>
                 <View style={styles.tipIconWrap}>
-                  <Text style={styles.tipIcon}>Ã¢Â­Â</Text>
+                  <Text style={styles.tipIcon}>â­</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tipTitle}>Favorites</Text>
                   <Text style={styles.tipDesc}>Quick access to your most used items</Text>
                 </View>
-                <Text style={styles.tipArrow}>Ã¢ÂÂº</Text>
+                <Text style={styles.tipArrow}>âº</Text>
               </View>
             </SectionCard>
           </>
@@ -602,62 +579,19 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
 
-  // Ã¢ÂÂÃ¢ÂÂ Hero Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Hero ââââââââââââââââââââââââââââââââââââââââââ
   hero: {
     backgroundColor: colors.green[600],
     paddingTop: 8,
-    paddingBottom: 24,
-    paddingHorizontal: GRID_PADDING,
-    borderBottomLeftRadius: borderRadius['2xl'],
-    borderBottomRightRadius: borderRadius['2xl'],
-    marginBottom: 16,
-    ...shadows.lg,
-    shadowColor: colors.green[700],
-  },
-  heroOverlay: {},
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  heroLeft: {},
-  heroGreeting: {
-    ...typography.body,
-    color: 'rgba(255,255,255,0.80)',
-  },
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 20 },
-
-  // ââ Hero ââââââââââââââââââââââââââââââââââ
-  hero: {
-    backgroundColor: colors.green[600],
-    paddingTop: 8,
-    paddingBottom: 24,
-    paddingHorizontal: GRID_PADDING,
-    borderBottomLeftRadius: borderRadius['2xl'],
-    borderBottomRightRadius: borderRadius['2xl'],
-    marginBottom: 16,
     minHeight: 140,
-    overflow: 'hidden',
-    ...shadows.lg,
-    shadowColor: colors.green[700],
-  },
-  heroImage: {
-    borderBottomLeftRadius: borderRadius['2xl'],
-    borderBottomRightRadius: borderRadius['2xl'],
-  },
-  heroImageOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.40)',
-    paddingTop: 8,
+    overflow: 'hidden' as const,
     paddingBottom: 24,
     paddingHorizontal: GRID_PADDING,
     borderBottomLeftRadius: borderRadius['2xl'],
     borderBottomRightRadius: borderRadius['2xl'],
+    marginBottom: 16,
+    ...shadows.lg,
+    shadowColor: colors.green[700],
   },
   heroOverlay: {},
   heroTopRow: {
@@ -667,11 +601,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   heroLeft: {},
-  heroBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   heroGreeting: {
     ...typography.body,
     color: 'rgba(255,255,255,0.80)',
@@ -707,10 +636,25 @@ const styles = StyleSheet.create({
   },
   householdIcon: { fontSize: 14 },
   householdName: { ...typography.caption, color: colors.white, fontWeight: '600' },
-
-  // ââ Header Image Controls ââââââââââââââââââ
+  // Header Image
+  heroImage: {
+    borderBottomLeftRadius: borderRadius['2xl'],
+    borderBottomRightRadius: borderRadius['2xl'],
+  },
+  heroImageOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.40)',
+    paddingTop: 8,
+    paddingBottom: 24,
+    paddingHorizontal: GRID_PADDING,
+  },
+  heroBottomRow: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+  },
   headerImageActions: {
-    flexDirection: 'row',
+    flexDirection: 'row' as const,
     gap: 8,
   },
   cameraBtn: {
@@ -718,17 +662,22 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     backgroundColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.30)',
   },
   cameraBtnIcon: {
     fontSize: 16,
-    color: colors.white,
+  },
+  cameraBtnText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '700' as const,
   },
 
-  // Ã¢ÂÂÃ¢ÂÂ Trial Banner Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+
+  // ââ Trial Banner ââââââââââââââââââââââââââââââââââââ
   trialBanner: {
     backgroundColor: 'rgba(59,130,246,0.08)',
     paddingVertical: 10,
@@ -742,7 +691,7 @@ const styles = StyleSheet.create({
   },
   trialText: { ...typography.caption, color: colors.blue[700], fontWeight: '600', textAlign: 'center' as const },
 
-  // Ã¢ÂÂÃ¢ÂÂ Search + Ask Bar Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Search + Ask Bar ââââââââââââââââââââââââââââââââ
   searchRow: {
     flexDirection: 'row',
     gap: 10,
@@ -777,7 +726,7 @@ const styles = StyleSheet.create({
   askIcon: { fontSize: 16 },
   askLabel: { ...typography.bodyBold, color: colors.white },
 
-  // Ã¢ÂÂÃ¢ÂÂ Category Grid Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Category Grid âââââââââââââââââââââââââââââââââââ
   categoryGrid: {
     paddingHorizontal: GRID_PADDING,
     marginBottom: 20,
@@ -804,7 +753,7 @@ const styles = StyleSheet.create({
   categoryEmoji: { fontSize: 26 },
   categoryLabel: { ...typography.small, color: colors.gray[600], fontWeight: '600' },
 
-  // Ã¢ÂÂÃ¢ÂÂ Section Cards Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Section Cards ââââââââââââââââââââââââââââââââââ
   sectionCard: {
     marginHorizontal: GRID_PADDING,
     marginBottom: 14,
@@ -825,7 +774,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.bodyBold, color: colors.gray[900] },
   sectionAction: { ...typography.caption, color: colors.green[600], fontWeight: '600' },
 
-  // Ã¢ÂÂÃ¢ÂÂ Events Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Events âââââââââââââââââââââââââââââââââââââââââ
   eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -844,7 +793,7 @@ const styles = StyleSheet.create({
   eventName: { ...typography.body, color: colors.gray[900] },
   eventLoc: { ...typography.small, color: colors.gray[400], marginTop: 2 },
 
-  // Ã¢ÂÂÃ¢ÂÂ Budget Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Budget âââââââââââââââââââââââââââââââââââââââââ
   budgetRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -872,7 +821,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 
-  // Ã¢ÂÂÃ¢ÂÂ Grocery Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Grocery ââââââââââââââââââââââââââââââââââââââââ
   groceryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -891,7 +840,7 @@ const styles = StyleSheet.create({
   groceryName: { ...typography.body, color: colors.gray[700] },
   groceryMore: { ...typography.small, color: colors.gray[400], marginTop: 8, textAlign: 'center' as const },
 
-  // Ã¢ÂÂÃ¢ÂÂ Maintenance Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Maintenance ââââââââââââââââââââââââââââââââââââ
   maintRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -910,12 +859,12 @@ const styles = StyleSheet.create({
   maintDue: { ...typography.small, color: colors.gray[400], marginTop: 2 },
   maintCatEmoji: { fontSize: 18 },
 
-  // Ã¢ÂÂÃ¢ÂÂ Empty State Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Empty State ââââââââââââââââââââââââââââââââââââ
   emptyState: { alignItems: 'center', paddingVertical: 16 },
   emptyText: { ...typography.body, color: colors.gray[400] },
   emptyHint: { ...typography.small, color: colors.gray[300], marginTop: 4 },
 
-  // Ã¢ÂÂÃ¢ÂÂ Tips Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ââ Tips âââââââââââââââââââââââââââââââââââââââââââ
   tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
