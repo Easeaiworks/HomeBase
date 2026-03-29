@@ -1,7 +1,6 @@
 /**
- * Calendar Tab
- * Full month calendar with real Supabase events
- * Redesigned with colored header to match home screen
+ * Calendar Tab - Full month calendar with Supabase events
+ * Redesigned with blue header
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -47,14 +46,18 @@ export default function CalendarScreen() {
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
   const isToday = (day: number) => day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
-
   const fetchEvents = useCallback(async () => {
     if (!household?.id) return;
     setIsLoading(true);
     try {
       const startDate = new Date(currentYear, currentMonth, 1).toISOString();
       const endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59).toISOString();
-      const { data, error } = await supabase.from('events').select('id, title, starts_at, ends_at, description, location, created_by').eq('household_id', household.id).gte('starts_at', startDate).lte('starts_at', endDate).order('starts_at');
+      const { data, error } = await supabase.from('events')
+        .select('id, title, starts_at, ends_at, description, location, created_by')
+        .eq('household_id', household.id)
+        .gte('starts_at', startDate)
+        .lte('starts_at', endDate)
+        .order('starts_at');
       if (!error && data) setEvents(data as unknown as CalendarEvent[]);
     } catch {} finally { setIsLoading(false); }
   }, [household?.id, currentMonth, currentYear]);
@@ -62,17 +65,22 @@ export default function CalendarScreen() {
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const getEventsForDay = (day: number) => {
-    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
     return events.filter((e) => e.starts_at.startsWith(dateStr));
   };
   const dayHasEvents = (day: number) => getEventsForDay(day).length > 0;
   const selectedEvents = getEventsForDay(selectedDate);
 
-  const prevMonth = () => { if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); } else { setCurrentMonth(currentMonth - 1); } setSelectedDate(1); };
-  const nextMonth = () => { if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); } else { setCurrentMonth(currentMonth + 1); } setSelectedDate(1); };
+  const prevMonth = () => {
+    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
+    else { setCurrentMonth(currentMonth - 1); }
+    setSelectedDate(1);
+  };
+  const nextMonth = () => {
+    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
+    else { setCurrentMonth(currentMonth + 1); }
+    setSelectedDate(1);
+  };
 
   const handleAddEvent = async () => {
-    if (!newTitle.trim() || !member?.id || !household?.id) return;
-    setIsSaving(true);
-    try {
-      con
+    if (!newTitle.trim() || !member?.id || !household?.id) ret
